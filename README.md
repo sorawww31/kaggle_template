@@ -14,25 +14,34 @@
     - 実行時に `exp={minor_exp_name}` で上書きする
     - `{major_exp_name}` と `{minor_exp_name}` の組み合わせで実験が再現できるようにする
 
-## Structure
+## Structure(罫線表記)
 ```text
 .
 ├── experiments
+│    └── exp000_sample
+│        ├── exp
+│        ├── output
+│        ├── utils
+│        ├── src
+│        └── run.py
 ├── input
 ├── notebook
-├── output
 ├── tools
-├── utils
 ├── Dockerfile
 ├── Dockerfile.cpu
 ├── LICENSE
 ├── Makefile
 ├── README.md
+├── .env.example
 ├── compose.cpu.yaml
 └── compose.yaml
 
 ```
-
+## 環境変数の設定
+```sh
+cp .env.example .env
+```
+を行い、必要事項を記入
 ## Docker による環境構築
 
 ```sh
@@ -52,8 +61,16 @@ make jupyter
 ## スクリプトの実行方法
 
 ```sh
-# python experiments/{major_version_name}/run.py exp={minor_version_name}
 
+# make bash; python experiments/{major_version_name}/run.py exp={minor_version_name}
+make bash exp=000
 python run.py
 python run.py exp=001
+```
+
+## Kaggle データセットの作成
+```sh
+# Kaggle API Keyが必要
+# major_virsion_nameでそのまま提出
+python tools/upload_model.py -t exp000 -d experiments/{major_virsion_name}
 ```
