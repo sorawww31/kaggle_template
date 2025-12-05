@@ -62,11 +62,15 @@ make jupyter
 
 ```sh
 
-# make bash; python experiments/{major_version_name}/run.py exp={minor_version_name}
 make bash exp=000
 python run.py
 python run.py exp=001
 ```
+もしくは
+```sh
+
+make bash
+python experiments/{major_version_name}/run.py exp={minor_version_name}
 
 ## Kaggle データセットの作成
 ```sh
