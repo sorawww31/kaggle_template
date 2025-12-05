@@ -1,13 +1,16 @@
 import datetime
+import os
 import time
 from datetime import timezone
 
+from dotenv import load_dotenv
 from kaggle.api.kaggle_api_extended import KaggleApi
 
+load_dotenv()
 api = KaggleApi()
 api.authenticate()
 
-COMPETITION = "child-mind-institute-detect-sleep-states"
+COMPETITION = os.getenv("COMPETITION")
 result_ = api.competition_submissions(COMPETITION)[0]
 latest_ref = str(result_)  # 最新のサブミット番号
 print(result_.url)
