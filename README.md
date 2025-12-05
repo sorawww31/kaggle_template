@@ -41,6 +41,7 @@ make build
 
 # bash に入る場合
 make bash
+make bash exp={major_exp_name}
 
 # jupyter lab を起動する場合
 make jupyter
@@ -53,6 +54,6 @@ make jupyter
 ```sh
 # python experiments/{major_version_name}/run.py exp={minor_version_name}
 
-python experiments/exp000_sample/run.py
-python experiments/exp000_sample/run.py exp=001
+python run.py
+python run.py exp=001
 ```
