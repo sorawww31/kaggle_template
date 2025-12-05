@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 from pathlib import Path
 from typing import Any
@@ -30,7 +31,7 @@ def copy_directory(source_dir: Path, dest_dir: Path):
 @click.command()
 @click.option("--title", "-t", default="sorawww31-models")
 @click.option("--dir", "-d", type=Path, default="./experiments")
-@click.option("--user_name", "-u", default="sorawww31")
+@click.option("--user_name", "-u", default=os.getenv("KAGGLE_USERNAME"))
 @click.option("--new", "-n", is_flag=True)
 def main(
     title: str,
