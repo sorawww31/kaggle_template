@@ -61,17 +61,15 @@ make jupyter
 ## スクリプトの実行方法
 
 ```sh
-
 make bash exp=000
 python run.py
 python run.py exp=001
 ```
 もしくは
 ```sh
-
 make bash
 python experiments/{major_version_name}/run.py exp={minor_version_name}
-```sh
+```
 ## Kaggle データセットの作成
 ```sh
 # Kaggle API Keyが必要
