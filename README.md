@@ -7,7 +7,7 @@
    - 実験用スクリプトと実験パラメータ設定を同一フォルダで局所的に管理して把握しやすくする
 - dataclass を用いた config 定義を用いることで、エディタの補完機能を利用できるように
 ## フォーク源から追加した機能
-- 実験管理が容易に。
+- 実験管理が容易に
   - ```experiments/{major_exp_name}```単位での実験管理
   - ```make bash exp={major_exp_name}``` 機能を追加し、```/kaggle/working```内で実験を完結
   - モデル、ソースコード、実験ログを一括でKaggle Datasetにして実験を管理
@@ -92,12 +92,12 @@ python run.py exp=001
 もしくは
 ```sh
 make bash
-python experiments/{major_version_name}/run.py exp={minor_version_name}
+python experiments/exp000_sample/run.py exp=001
 ```
 ## Kaggle データセットの作成
 ```sh
 # Kaggle API Keyが必要
 # major_virsion_nameでそのまま提出
 # -t: タイトル, -d: ディレクトリ
-python tools/upload_model.py -t exp000 -d experiments/{major_virsion_name}
+python tools/upload_dataset.py -t exp000 -d experiments/{major_virsion_name}
 ```
