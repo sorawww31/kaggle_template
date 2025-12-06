@@ -1,21 +1,21 @@
 import os
-import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
 
 import hydra
-import wandb
+from dotenv import load_dotenv
 from hydra.core.config_store import ConfigStore
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import OmegaConf
-
 from utils.env import EnvConfig
 from utils.logger import get_logger
 from utils.timing import trace
 
+import wandb
+
+load_dotenv()
 LOGGER = None
-WANDB_PROJECT_NAME = "kaggle-template"
 
 
 ####################
@@ -28,6 +28,7 @@ class ExpConfig:
     learning_rate: float = 0.001
     batch_size: int = 32
     folds: list = field(default_factory=lambda: [0, 1, 2, 3, 4])
+    wandb_project_name: str = os.getenv("COMPETITION")
 
 
 @dataclass
@@ -55,7 +56,7 @@ def main(
 ) -> None:  # Duck typing: cfgは実際にはDictConfigだが、Configクラスのように扱える
     print(cfg)
 
-    exp_name = f"{Path(sys.argv[0]).parent.name}/{HydraConfig.get().runtime.choices.exp}"  # e.g. 000_sample/default
+    exp_name = f"{os.getenv('EXPNUM')}/{HydraConfig.get().runtime.choices.exp}"  # e.g. exp000/default
     output_dir = Path(cfg.env.exp_output_dir) / exp_name
     os.makedirs(output_dir, exist_ok=True)
     print(f"output_dir: {output_dir}")
@@ -70,7 +71,7 @@ def main(
     log_config(cfg)
 
     wandb.init(
-        project=WANDB_PROJECT_NAME,
+        project=cfg.exp.wandb_project_name,
         name=exp_name,
         notes=", ".join(HydraConfig.get().overrides.task),  # オーバーライドの内容
         config=OmegaConf.to_container(cfg.exp, resolve=True),

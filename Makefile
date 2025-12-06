@@ -14,13 +14,13 @@ endif
 default: build
 
 build:
-	docker compose $(CPU_FLAG)  build
+	docker compose $(CPU_FLAG) build
 
 bash:
-	docker compose $(CPU_FLAG)  run --rm $(EXP_FLAG) kaggle bash
+	docker compose $(CPU_FLAG) run --rm $(EXP_FLAG) kaggle bash
 
 jupyter:
-	docker compose $(CPU_FLAG) $(EXP_FLAG) up
+	docker compose $(CPU_FLAG) up
 
 down:
-	docker compose $(CPU_FLAG) $(EXP_FLAG) down
+	docker compose $(CPU_FLAG) down
