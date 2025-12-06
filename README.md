@@ -6,6 +6,29 @@
 - 実験用スクリプトファイルを major バージョンごとにフォルダごとに管理 & 実験パラメータ設定を minor バージョンとしてファイルとして管理
    - 実験用スクリプトと実験パラメータ設定を同一フォルダで局所的に管理して把握しやすくする
 - dataclass を用いた config 定義を用いることで、エディタの補完機能を利用できるように
+## フォーク源から追加した機能
+- 実験管理が容易に。
+  - ```experiments/{major_exp_name}```単位での実験管理
+  - ```make bash exp={major_exp_name}``` 機能を追加し、```/kaggle/working```内で実験を完結
+  - モデル、ソースコード、実験ログを一括でKaggle Datasetにして実験を管理
+  - ```tools/upload_dataset.py```で一括データセット化
+- 環境変数管理
+  - ```.env.example```を追加
+    - 環境変数にてAPI_KEY等を管理
+    - それに伴い```compose.yaml```を修正
+
+### 変更コードまとめ
+* 実験スクリプト
+    * ```experiments/exp000_sample```直下のディレクトリ構造
+    * ```experiments/exp000_sample/run.py```
+* 環境構築
+  * ```Dockerfile```
+  * ```Dockerfile.cpu```
+  * ```compose.yaml```
+  * ```compose.cpu.yaml```
+  * ```.env.example```
+* その他
+  * ```tools/upload_dataset.py```
 
 ### Hydra による Config 管理
 - Config は yamlとdictで定義するのではなく、dataclass を用いて定義することで、エディタの補完などの機能を使いつつタイポを防止できるようにする
@@ -27,6 +50,7 @@
 ├── input
 ├── notebook
 ├── tools
+├── output
 ├── Dockerfile
 ├── Dockerfile.cpu
 ├── LICENSE
@@ -50,7 +74,7 @@ make build
 
 # bash に入る場合
 make bash
-make bash exp={major_exp_name}
+make bash exp={major_exp_number} # ex) exp=000
 
 # jupyter lab を起動する場合
 make jupyter
@@ -74,5 +98,6 @@ python experiments/{major_version_name}/run.py exp={minor_version_name}
 ```sh
 # Kaggle API Keyが必要
 # major_virsion_nameでそのまま提出
+# -t: タイトル, -d: ディレクトリ
 python tools/upload_model.py -t exp000 -d experiments/{major_virsion_name}
 ```
