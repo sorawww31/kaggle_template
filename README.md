@@ -71,7 +71,7 @@ python run.py exp=001
 
 make bash
 python experiments/{major_version_name}/run.py exp={minor_version_name}
-
+```sh
 ## Kaggle データセットの作成
 ```sh
 # Kaggle API Keyが必要
