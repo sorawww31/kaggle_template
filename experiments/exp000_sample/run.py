@@ -3,17 +3,18 @@ import sys
 import time
 from dataclasses import dataclass, field
 from pathlib import Path
+from typing import Optional
 
 import hydra
 from dotenv import load_dotenv
 from hydra.core.config_store import ConfigStore
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import OmegaConf
-
-import wandb
 from utils.env import EnvConfig
 from utils.logger import get_logger
 from utils.timing import trace
+
+import wandb
 
 load_dotenv()
 LOGGER = None
@@ -29,7 +30,7 @@ class ExpConfig:
     learning_rate: float = 0.001
     batch_size: int = 32
     folds: list = field(default_factory=lambda: [0, 1, 2, 3, 4])
-    wandb_project_name: str = os.getenv("COMPETITION")
+    wandb_project_name: Optional[str] = os.getenv("COMPETITION", "kaggle_template")
 
 
 @dataclass
@@ -51,19 +52,25 @@ def log_config(cfg: Config) -> None:
     LOGGER.info("Config: %s", cfg)
 
 
+def init_output_dir(cfg: Config) -> Path:
+    this_file_path = Path(__file__).resolve()
+    cfg.env.output_dir = this_file_path.parent / "output"
+    cfg.env.exp_output_dir = cfg.env.output_dir / HydraConfig.get().runtime.choices.exp
+    output_dir = cfg.env.exp_output_dir
+    os.makedirs(output_dir, exist_ok=True)
+    print(f"output_dir: {output_dir}")
+    return output_dir
+
+
 @hydra.main(version_base=None, config_path=".", config_name="config")
 def main(
     cfg: Config,
 ) -> None:  # Duck typing: cfgは実際にはDictConfigだが、Configクラスのように扱える
     print(cfg)
 
-    if os.getenv("EXPNUM") is None:
-        exp_name = f"{Path(sys.argv[0]).parent.name}/{HydraConfig.get().runtime.choices.exp}"  # e.g. 000_sample/default
-    else:
-        exp_name = f"{os.getenv('EXPNUM')}/{HydraConfig.get().runtime.choices.exp}"  # e.g. exp000/default
-    output_dir = Path(cfg.env.exp_output_dir) / exp_name
-    os.makedirs(output_dir, exist_ok=True)
-    print(f"output_dir: {output_dir}")
+    exp_name = f"{Path(sys.argv[0]).parent.name}/{HydraConfig.get().runtime.choices.exp}"  # e.g. 000_sample/default
+
+    output_dir = init_output_dir(cfg)
 
     with trace("sleep"):
         time.sleep(1.1)

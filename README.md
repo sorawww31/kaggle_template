@@ -81,8 +81,7 @@ make jupyter
 
 # CPUで起動する場合はCPU=1やCPU=True などをつける
 ```
-
-## スクリプトの実行方法
+### スクリプトの実行方法
 
 ```sh
 make bash exp=000
@@ -94,6 +93,7 @@ python run.py exp=001
 make bash
 python experiments/exp000_sample/run.py exp=001
 ```
+
 ## Kaggle データセットの作成
 ```sh
 # Kaggle API Keyが必要
@@ -101,3 +101,32 @@ python experiments/exp000_sample/run.py exp=001
 # -t: タイトル, -d: ディレクトリ
 python tools/upload_dataset.py -t exp000 -d experiments/{major_virsion_name}
 ```
+
+## (Dockerが使えない方向け)uvによる環境構築
+### uvのインストール
+詳しくは[こちら](https://docs.astral.sh/uv/getting-started/installation/v)を参照
+```sh
+curl -LsSf https://astral.sh/uv/install.sh | sh
+uv version # インストールの確認
+```
+### .venv 仮想環境の作成
+```sh
+uv sync
+```
+適宜追加したいモジュールは、以下のコマンドで追加してください。その他利用方法は
+```sh
+uv add numpy
+```
+その他利用方法は[こちら](https://docs.astral.sh/uv/)を参照してください。
+
+**注意事項**
+* pythonバージョン, numpyバージョンはkaggle kernelに合わせ最新版ではない
+  * ```python==3.11.13```
+  * ```numpy==1.26.4```
+* ```torch, cuda```は、各環境に合わせインストールしてください。
+## スクリプトの実行方法
+```sh
+uv run experiments/exp000_sample/run.py exp=001
+```
+
+
