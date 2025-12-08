@@ -67,7 +67,7 @@ cp .env.example .env
 ```
 を行い、必要事項を記入
 ## Docker による環境構築
-
+Dockerが利用できない方は、同md下部のuvによる環境設定を参照してください。
 ```sh
 # imageのbuild
 make build
@@ -124,9 +124,11 @@ uv add numpy
   * ```python==3.11.13```
   * ```numpy==1.26.4```
 * ```torch, cuda```は、各環境に合わせインストールしてください。
-## スクリプトの実行方法
+### スクリプトの実行方法
 ```sh
 uv run experiments/exp000_sample/run.py exp=001
 ```
+### jupyter notebook利用方法
+uvによって作成された.venvを使って
 
 
