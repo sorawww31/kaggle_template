@@ -31,23 +31,29 @@ def copy_directory(source_dir: Path, dest_dir: Path):
 @click.command()
 @click.option("--title", "-t", default="sorawww31-models")
 @click.option("--dir", "-d", type=Path, default="./experiments")
-@click.option("--user_name", "-u", default=os.getenv("KAGGLE_USERNAME"))
+@click.option("--user_name", "-u", default=os.getenv("KAGGLE_USER_NAME"))
 @click.option("--new", "-n", is_flag=True)
 def main(
     title: str,
     dir: Path,
-    user_name: str = "sorawww31",
+    user_name: str = None,
     new: bool = False,
 ):
-    """extentionを指定して、dir以下のファイルをzipに圧縮し、kaggleにアップロードする。
+    """extensionを指定して、dir以下のファイルをzipに圧縮し、kaggleにアップロードする。
 
     Args:
         title (str): kaggleにアップロードするときのタイトル
         dir (Path): アップロードするファイルがあるディレクトリ
-        extentions (list[str], optional): アップロードするファイルの拡張子.
+        extensions (list[str], optional): アップロードするファイルの拡張子.
         user_name (str, optional): kaggleのユーザー名.
         new (bool, optional): 新規データセットとしてアップロードするかどうか.
     """
+    # デフォルトのユーザー名を環境変数から取得
+    if user_name is None:
+        user_name = os.getenv("KAGGLE_USER_NAME")
+        if user_name is None:
+            raise ValueError("KAGGLE_USER_NAME environment variable is not set and no user_name was provided")
+    
     tmp_dir = Path("./tmp")
     tmp_dir.mkdir(parents=True, exist_ok=True)
 

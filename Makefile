@@ -1,6 +1,6 @@
 CPU_FLAG := # 変数の宣言
 ifneq ($(CPU),) #ifneqは変数が空でない場合に真
-    CPU_FLAG := -f compose.CPU.yaml
+    CPU_FLAG := -f compose.cpu.yaml
 endif
 
 EXP_FLAG :=
