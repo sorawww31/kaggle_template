@@ -34,7 +34,7 @@ def copy_files_with_exts(source_dir: Path, dest_dir: Path, exts: list):
 @click.option("--title", "-t", default="kami-model")
 @click.option("--dir", "-d", type=Path, default="./output/experiments")
 @click.option(
-    "--extentions",
+    "--extensions",
     "-e",
     type=list[str],
     default=["best_model.pt", ".hydra/*.yaml"],
@@ -44,16 +44,16 @@ def copy_files_with_exts(source_dir: Path, dest_dir: Path, exts: list):
 def main(
     title: str,
     dir: Path,
-    extentions: list[str] = [".pth", ".yaml"],
+    extensions: list[str] = [".pth", ".yaml"],
     user_name: str = None,
     new: bool = False,
 ):
-    """extentionを指定して、dir以下のファイルをzipに圧縮し、kaggleにアップロードする。
+    """extensionを指定して、dir以下のファイルをzipに圧縮し、kaggleにアップロードする。
 
     Args:
         title (str): kaggleにアップロードするときのタイトル
         dir (Path): アップロードするファイルがあるディレクトリ
-        extentions (list[str], optional): アップロードするファイルの拡張子.
+        extensions (list[str], optional): アップロードするファイルの拡張子.
         user_name (str, optional): kaggleのユーザー名.
         new (bool, optional): 新規データセットとしてアップロードするかどうか.
     """
@@ -67,7 +67,7 @@ def main(
     tmp_dir.mkdir(parents=True, exist_ok=True)
 
     # 拡張子が.pthのファイルをコピー
-    copy_files_with_exts(dir, tmp_dir, extentions)
+    copy_files_with_exts(dir, tmp_dir, extensions)
 
     # dataset-metadata.jsonを作成
     dataset_metadata: dict[str, Any] = {}

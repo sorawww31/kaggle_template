@@ -39,12 +39,12 @@ def main(
     user_name: str = None,
     new: bool = False,
 ):
-    """extentionを指定して、dir以下のファイルをzipに圧縮し、kaggleにアップロードする。
+    """extensionを指定して、dir以下のファイルをzipに圧縮し、kaggleにアップロードする。
 
     Args:
         title (str): kaggleにアップロードするときのタイトル
         dir (Path): アップロードするファイルがあるディレクトリ
-        extentions (list[str], optional): アップロードするファイルの拡張子.
+        extensions (list[str], optional): アップロードするファイルの拡張子.
         user_name (str, optional): kaggleのユーザー名.
         new (bool, optional): 新規データセットとしてアップロードするかどうか.
     """
