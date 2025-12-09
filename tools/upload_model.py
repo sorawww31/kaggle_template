@@ -1,4 +1,5 @@
 import json
+import os
 import shutil
 from pathlib import Path
 from typing import Any
@@ -38,13 +39,13 @@ def copy_files_with_exts(source_dir: Path, dest_dir: Path, exts: list):
     type=list[str],
     default=["best_model.pt", ".hydra/*.yaml"],
 )
-@click.option("--user_name", "-u", default="kami634")
+@click.option("--user_name", "-u", default=None)
 @click.option("--new", "-n", is_flag=True)
 def main(
     title: str,
     dir: Path,
     extentions: list[str] = [".pth", ".yaml"],
-    user_name: str = "kami634",
+    user_name: str = None,
     new: bool = False,
 ):
     """extentionを指定して、dir以下のファイルをzipに圧縮し、kaggleにアップロードする。
@@ -56,6 +57,12 @@ def main(
         user_name (str, optional): kaggleのユーザー名.
         new (bool, optional): 新規データセットとしてアップロードするかどうか.
     """
+    # デフォルトのユーザー名を環境変数から取得
+    if user_name is None:
+        user_name = os.getenv("KAGGLE_USER_NAME")
+        if user_name is None:
+            raise ValueError("KAGGLE_USER_NAME environment variable is not set and no user_name was provided")
+    
     tmp_dir = Path("./tmp")
     tmp_dir.mkdir(parents=True, exist_ok=True)
 

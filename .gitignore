@@ -5,6 +5,7 @@
 /output
 /wandb
 /.netrc
+/tmp
 
 
 # Byte-compiled / optimized / DLL files

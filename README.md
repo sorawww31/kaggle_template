@@ -97,9 +97,9 @@ python experiments/exp000_sample/run.py exp=001
 ## Kaggle データセットの作成
 ```sh
 # Kaggle API Keyが必要
-# major_virsion_nameでそのまま提出
+# major_version_nameでそのまま提出
 # -t: タイトル, -d: ディレクトリ
-python tools/upload_dataset.py -t exp000 -d experiments/{major_virsion_name}
+python tools/upload_dataset.py -t exp000 -d experiments/{major_version_name}
 ```
 
 ## (Dockerが使えない方向け)uvによる環境構築
