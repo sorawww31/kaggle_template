@@ -1,13 +1,14 @@
 {
-  "editor.formatOnPaste": true,
+  "editor.inlineSuggest.enabled": false,
   "[python]": {
     "editor.formatOnSave": true,
     "editor.codeActionsOnSave": {
-      "source.organizeImports": "explicit"
+      "source.fixAll.ruff": "explicit",
+      "source.organizeImports.ruff": "explicit"
     },
-    "editor.defaultFormatter": "charliermarsh.ruff"
+    "editor.defaultFormatter": "charliermarsh.ruff",
   },
-  "cSpell.words": [
-    "kaggle"
+  "mypy-type-checker.args": [
+    "--ignore-missing-imports"
   ],
 }
