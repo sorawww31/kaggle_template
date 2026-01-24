@@ -29,7 +29,7 @@ class ExpConfig:
     learning_rate: float = 0.001
     batch_size: int = 32
     folds: list = field(default_factory=lambda: [0, 1, 2, 3, 4])
-    wandb_project_name: str = os.getenv("COMPETITION")
+    wandb_project_name: str = os.getenv("COMPETITION", "default")
 
 
 @dataclass
@@ -47,7 +47,7 @@ cs.store(name="default", group="exp", node=ExpConfig)
 ####################
 # 実験用コード
 ####################
-def log_config(cfg: Config) -> None:
+def log_config(cfg: Config, LOGGER) -> None:
     LOGGER.info("Config: %s", cfg)
 
 
@@ -72,7 +72,7 @@ def main(
     LOGGER = get_logger(__name__, output_dir)
     LOGGER.info("Start")
 
-    log_config(cfg)
+    log_config(cfg, LOGGER)
 
     wandb.init(
         project=cfg.exp.wandb_project_name,
