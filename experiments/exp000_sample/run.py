@@ -50,42 +50,37 @@ cs.store(name="default", group="exp", node=ExpConfig)
 ####################
 def log_config(cfg: Config, LOGGER) -> None:
     LOGGER.info("\nConfig: %s", json.dumps(OmegaConf.to_container(cfg, resolve=True), default=str, indent=4))
-
-
-
-
-
+    
 def init_output_dir(cfg: Config) -> Path:
     this_file_path = Path(__file__).resolve()
     cfg.env.output_dir = this_file_path.parent / "outputs"
     cfg.env.exp_output_dir = cfg.env.output_dir / HydraConfig.get().runtime.choices.exp
     output_dir = cfg.env.exp_output_dir
     os.makedirs(output_dir, exist_ok=True)
-    print(f"output_dir: {output_dir}")
     return output_dir
 
-def save_config(cfg: Config) -> None:
+def save_config(cfg: Config, LOGGER) -> None:
     """設定をexp_output_dirにconfig.yamlとして保存する"""
     config_path = Path(cfg.env.exp_output_dir) / "config.yaml"
     OmegaConf.save(cfg, config_path)
-    print(f"Config saved to: {config_path}")
+    LOGGER(f"Config saved to: {config_path}")
 
 @hydra.main(version_base=None, config_path=".", config_name="config")
 def main(
     cfg: Config,
 ) -> None:  # Duck typing: cfgは実際にはDictConfigだが、Configクラスのように扱える
-    print(cfg)
+
+    global LOGGER
+    output_dir = init_output_dir(cfg)
+    LOGGER = get_logger(__name__, output_dir)
+    LOGGER.info("output_dir: ", output_dir)
+    LOGGER.info("Start")
 
     exp_name = f"{Path(sys.argv[0]).parent.name}/{HydraConfig.get().runtime.choices.exp}"  # e.g. 000_sample/default
 
-    output_dir = init_output_dir(cfg)
 
     with trace("sleep"):
         time.sleep(1.1)
-
-    global LOGGER
-    LOGGER = get_logger(__name__, output_dir)
-    LOGGER.info("Start")
 
     log_config(cfg, LOGGER)
     save_config(cfg)
