@@ -8,6 +8,12 @@ def _project_root() -> Path:
 
 @dataclass
 class EnvConfig:
-    input_dir: str | Path = field(default_factory=lambda: str(_project_root() / "input"))
-    output_dir: str | Path  = field(default_factory=lambda: str(_project_root() / "output"))
-    exp_output_dir: str | Path  = field(default_factory=lambda: str(_project_root() / "output" / "experiments"))
+    input_dir: str | Path = field(
+        default_factory=lambda: str(_project_root() / "input")
+    )
+    output_dir: str | Path = field(
+        default_factory=lambda: str(_project_root() / "output")
+    )
+    exp_output_dir: str | Path = field(
+        default_factory=lambda: str(_project_root() / "output" / "experiments")
+    )
