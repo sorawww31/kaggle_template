@@ -97,7 +97,7 @@ python experiments/exp000_sample/run.py exp=001
 # Kaggle API Keyが必要
 # major_virsion_nameでそのまま提出
 # -t: タイトル, -d: ディレクトリ
-python tools/upload_dataset.py -t exp000 -d experiments/{major_virsion_name}
+python tools/upload_dataset.py --title exp000 --dir experiments/exp000_sample
 ```
 
 ## uvによる環境構築

@@ -2,15 +2,15 @@ import json
 import os
 import sys
 import time
-from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Optional, cast
+from typing import Any, cast
 
 import hydra
 from dotenv import load_dotenv
 from hydra.core.config_store import ConfigStore
 from hydra.core.hydra_config import HydraConfig
 from omegaconf import OmegaConf
+from src.config import Config, ExpConfig
 
 import wandb
 
@@ -26,25 +26,6 @@ from utils.timing import trace  # noqa: E402
 
 load_dotenv()
 LOGGER = None
-
-
-####################
-# Config 設定
-####################
-@dataclass
-class ExpConfig:
-    debug: bool = False
-    seed: int = 7
-    learning_rate: float = 0.001
-    batch_size: int = 32
-    folds: list = field(default_factory=lambda: [0, 1, 2, 3, 4])
-    wandb_project_name: Optional[str] = os.getenv("COMPETITION", "kaggle_template")
-
-
-@dataclass
-class Config:
-    env: EnvConfig = field(default_factory=EnvConfig)
-    exp: ExpConfig = field(default_factory=ExpConfig)
 
 
 # hydra用にdefaultを設定
@@ -63,21 +44,17 @@ def log_config(cfg: Config, LOGGER) -> None:
     )
 
 
-def init_output_dir(cfg: Config):
-    this_file_path = Path(__file__).resolve()
-    cfg.env.output_dir = this_file_path.parent / "outputs"
-    cfg.env.exp_output_dir = (
-        cfg.env.output_dir / HydraConfig.get().runtime.choices["exp"]
-    )
-    output_dir = cfg.env.exp_output_dir
-    os.makedirs(output_dir, exist_ok=True)
+def init_output_dir(cfg: Config, exp_name: str):
+    output_dir = Path(cfg.env.output_dir) / exp_name
+    cfg.env.exp_output_dir = output_dir
+    output_dir.mkdir(parents=True, exist_ok=True)
     return output_dir
 
 
 def save_config(cfg: Config, LOGGER) -> None:
     """設定をexp_output_dirにconfig.yamlとして保存する"""
     config_path = Path(cfg.env.exp_output_dir) / "config.yaml"
-    OmegaConf.save(cfg, config_path)
+    OmegaConf.save(cfg.exp, config_path)
     LOGGER.info(f"Config saved to: {config_path}")
 
 
@@ -86,12 +63,12 @@ def main(
     cfg: Config,
 ) -> None:  # Duck typing: cfgは実際にはDictConfigだが、Configクラスのように扱える
     global LOGGER
-    output_dir = init_output_dir(cfg)
+    exp_name = f"{Path(sys.argv[0]).parent.name}/{HydraConfig.get().runtime.choices['exp']}"  # e.g. 000_sample/default
+    exp_name += f"_{cfg.exp.name}" if cfg.exp.name != "" else ""
+    output_dir = init_output_dir(cfg, exp_name)
     LOGGER = get_logger(__name__, output_dir)
     LOGGER.info("output_dir: %s", output_dir)
     LOGGER.info("Start")
-
-    exp_name = f"{Path(sys.argv[0]).parent.name}/{HydraConfig.get().runtime.choices['exp']}"  # e.g. 000_sample/default
 
     with trace("sleep"):
         time.sleep(1.1)
