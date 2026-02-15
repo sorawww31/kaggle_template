@@ -3,7 +3,7 @@
 /.ipython
 /input
 /output
-outputs
+# /outputs
 /wandb
 /.netrc
 

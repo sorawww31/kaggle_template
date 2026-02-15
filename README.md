@@ -43,7 +43,6 @@
 ├── experiments
 │    └── exp000_sample
 │        ├── exp
-│        ├── output
 │        ├── utils
 │        ├── src
 │        └── run.py
@@ -74,7 +73,6 @@ make build
 
 # bash に入る場合
 make bash
-make bash exp={major_exp_number} # ex) exp=000
 
 # jupyter lab を起動する場合
 make jupyter
@@ -102,7 +100,7 @@ python experiments/exp000_sample/run.py exp=001
 python tools/upload_dataset.py -t exp000 -d experiments/{major_virsion_name}
 ```
 
-## (Dockerが使えない方向け)uvによる環境構築
+## uvによる環境構築
 ### uvのインストール
 詳しくは[こちら](https://docs.astral.sh/uv/getting-started/installation/v)を参照
 ```sh
@@ -111,7 +109,12 @@ uv version # インストールの確認
 ```
 ### .venv 仮想環境の作成
 ```sh
-uv sync
+# セットアップ
+make uv-setup
+
+# jupyter lab を起動する場合
+make uv-jupyter
+
 ```
 適宜追加したいモジュールは、以下のコマンドで追加してください。その他利用方法は
 ```sh

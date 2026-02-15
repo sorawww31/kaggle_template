@@ -19,3 +19,18 @@ dependencies = [
     "tqdm>=4.67.1",
     "wandb>=0.23.1",
 ]
+
+[dependency-groups]
+dev = [
+    "ruff",
+    "pytest",
+    "ipykernel",
+    "jupyterlab",
+]
+
+[tool.ruff]
+line-length = 120
+target-version = "py312"
+
+[tool.ruff.lint.isort]
+known-first-party = ["utils", "experiments"]
