@@ -79,7 +79,7 @@ def upload_single(dir: Path, title: str, user_name: str, new: bool):
     "--exp",
     "-e",
     default=None,
-    help="実験名 (例: exp007)。experiments/<exp>_* と output/<exp>_* を自動的にアップロードする。",
+    help="実験名 (例: exp007)。experiments/<exp>_* と outputs/<exp>_* を自動的にアップロードする。",
 )
 def main(
     title: str,
@@ -90,9 +90,9 @@ def main(
 ):
     """dir以下のファイルをKaggleデータセットとしてアップロードする。
 
-    --exp を指定すると、experiments/<exp>_* と output/<exp>_* に
+    --exp を指定すると、experiments/<exp>_* と outputs/<exp>_* に
     マッチするディレクトリを同じデータセットにまとめてアップロードする。
-    データセット内では experiments/ と output/ のサブディレクトリに分かれる。
+    データセット内では experiments/ と outputs/ のサブディレクトリに分かれる。
 
     Args:
         title (str): kaggleにアップロードするときのタイトル (--exp未指定時に使用)
@@ -102,14 +102,14 @@ def main(
         exp (str, optional): 実験名 (例: exp007).
     """
     if exp is not None:
-        # experiments/<exp>_* と output/<exp>_* を探す
-        base_dirs = [Path("./experiments"), Path("./output")]
+        # experiments/<exp>_* と outputs/<exp>_* を探す
+        base_dirs = [Path("./experiments"), Path("./outputs")]
         targets: list[Path] = []
         for base in base_dirs:
             targets.extend(sorted(base.glob(f"{exp}_*")))
 
         if not targets:
-            print(f"Error: No directories matching '{exp}_*' found in experiments/ or output/")
+            print(f"Error: No directories matching '{exp}_*' found in experiments/ or outputs/")
             return
 
         # データセットタイトルを最初に見つかったディレクトリ名から決定

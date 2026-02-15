@@ -49,7 +49,7 @@
 ├── input
 ├── notebook
 ├── tools
-├── output
+├── outputs
 ├── Dockerfile
 ├── Dockerfile.cpu
 ├── LICENSE
@@ -64,7 +64,7 @@
 ```sh
 cp .env.example .env
 ```
-を行い、必要事項を記入
+を行い、`.env`に必要事項を記入
 ## Docker による環境構築
 Dockerが利用できない方は、同md下部のuvによる環境設定を参照してください。
 ```sh
@@ -80,24 +80,47 @@ make jupyter
 # CPUで起動する場合はCPU=1やCPU=True などをつける
 ```
 ### スクリプトの実行方法
-
-```sh
-make bash exp=000
-python run.py
-python run.py exp=001
-```
-もしくは
 ```sh
 make bash
 python experiments/exp000_sample/run.py exp=001
 ```
 
+`experiments/exp000_sample/run.py` は実行時に出力ディレクトリを自動作成します。
+
+- 出力先のベース: `env.output_dir`（デフォルト: `outputs`）
+- 実験ごとの出力先: `{env.output_dir}/{major_exp_name}/{minor_exp_name}`
+  - `major_exp_name`: 実行スクリプトの親ディレクトリ名（例: `exp000_sample`）
+  - `minor_exp_name`: `exp=...` で選んだ設定名（例: `001`）
+- `init_output_dir`関数によって、適切な`cfg.env.exp_output_dir`が設定される
+- `exp.name` を指定すると末尾に `_{exp.name}` が付きます
+### つまりcfg.env.exp_output_dir を利用すればいい
+例:
+```sh
+python experiments/exp000_sample/run.py exp=001 exp.name=baseline
+# -> outputs/exp000_sample/001_baseline/
+```
+
 ## Kaggle データセットの作成
+
+### 1. 任意の1ディレクトリをアップロードする
 ```sh
 # Kaggle API Keyが必要
 # major_virsion_nameでそのまま提出
 # -t: タイトル, -d: ディレクトリ
 python tools/upload_dataset.py --title exp000 --dir experiments/exp000_sample
+```
+
+### 2. `--exp` で実験関連ディレクトリをまとめてアップロードする（新機能）
+`--exp` を指定すると、次のパターンに一致するディレクトリを探して1つのDatasetにまとめます。
+
+- `experiments/<exp>_*`
+- `outputs/<exp>_*`
+
+Dataset内では `experiments/` と `outputs/` のサブディレクトリとして保存されます。
+
+```sh
+# 例: experiments/exp000_sample と output/exp000_sample をまとめてアップロード
+python tools/upload_dataset.py --exp exp000
 ```
 
 ## uvによる環境構築
@@ -131,7 +154,4 @@ uv add numpy
 ```sh
 uv run experiments/exp000_sample/run.py exp=001
 ```
-### jupyter notebook利用方法
-uvによって作成された.venvを使って
-
 
