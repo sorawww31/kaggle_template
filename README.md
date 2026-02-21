@@ -118,9 +118,15 @@ python tools/upload_dataset.py --title exp000 --dir experiments/exp000_sample
 
 Dataset内では `experiments/` と `outputs/` のサブディレクトリとして保存されます。
 
+`-t/--title` を明示指定した場合は、その値をDataset名として使用します。
+未指定の場合は、最初に見つかった対象ディレクトリ名から自動でDataset名を決定します。
+
 ```sh
 # 例: experiments/exp000_sample と output/exp000_sample をまとめてアップロード
 python tools/upload_dataset.py --exp exp000
+
+# 例: --exp 利用時にタイトルを明示指定
+python tools/upload_dataset.py --exp exp000 --title exp000-custom
 ```
 
 ## uvによる環境構築
@@ -154,4 +160,3 @@ uv add numpy
 ```sh
 uv run experiments/exp000_sample/run.py exp=001
 ```
-

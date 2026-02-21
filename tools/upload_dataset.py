@@ -1,3 +1,7 @@
+# Where: tools/upload_dataset.py
+# What: Kaggle DatasetアップロードCLI
+# Why: 実験成果物を安全に一括アップロードし、再現管理を簡単にするため
+
 import json
 import os
 import shutil
@@ -5,6 +9,7 @@ from pathlib import Path
 from typing import Any
 
 import click
+from click.core import ParameterSource
 from dotenv import load_dotenv
 from kaggle.api.kaggle_api_extended import KaggleApi
 
@@ -81,7 +86,9 @@ def upload_single(dir: Path, title: str, user_name: str, new: bool):
     default=None,
     help="実験名 (例: exp007)。experiments/<exp>_* と outputs/<exp>_* を自動的にアップロードする。",
 )
+@click.pass_context
 def main(
+    ctx: click.Context,
     title: str,
     dir: Path,
     user_name: str = "sorawww31",
@@ -95,7 +102,8 @@ def main(
     データセット内では experiments/ と outputs/ のサブディレクトリに分かれる。
 
     Args:
-        title (str): kaggleにアップロードするときのタイトル (--exp未指定時に使用)
+        title (str): kaggleにアップロードするときのタイトル.
+            --exp指定時も、-t/--title を明示した場合はこちらを優先する。
         dir (Path): アップロードするファイルがあるディレクトリ (--exp未指定時に使用)
         user_name (str, optional): kaggleのユーザー名.
         new (bool, optional): 新規データセットとしてアップロードするかどうか.
@@ -112,8 +120,12 @@ def main(
             print(f"Error: No directories matching '{exp}_*' found in experiments/ or outputs/")
             return
 
-        # データセットタイトルを最初に見つかったディレクトリ名から決定
-        dataset_title = targets[0].name.replace("_", "-")
+        # -t/--title が明示指定された場合は優先し、未指定なら従来通り自動決定
+        title_source = ctx.get_parameter_source("title")
+        if title_source == ParameterSource.COMMANDLINE:
+            dataset_title = title
+        else:
+            dataset_title = targets[0].name.replace("_", "-")
 
         # 全ターゲットを1つのtmpディレクトリにまとめる
         tmp_dir = Path("./tmp")
