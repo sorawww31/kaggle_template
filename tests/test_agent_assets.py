@@ -41,32 +41,57 @@ def _write_minimal_agent_sources(root: Path) -> None:
     (skill_dir / "SKILL.md").write_text("# Sample skill\n", encoding="utf-8")
 
 
-def test_generated_agent_assets_are_current() -> None:
-    for path, expected in render_files(ROOT).items():
-        assert path.exists(), f"{path.relative_to(ROOT)} is missing"
-        assert path.read_bytes() == expected, f"{path.relative_to(ROOT)} is stale"
+def _delete_sample_shared_sources(root: Path) -> None:
+    (root / ".agents" / "commands" / "sample.md").unlink()
+    (root / ".agents" / "skills" / "sample" / "SKILL.md").unlink()
 
 
-def test_sync_removes_generated_assets_when_shared_sources_are_deleted(tmp_path: Path) -> None:
-    _write_minimal_agent_sources(tmp_path)
-    written, removed = sync_agent_assets.write_files(tmp_path)
-    assert written
-    assert not removed
-
-    (tmp_path / ".agents" / "commands" / "sample.md").unlink()
-    (tmp_path / ".agents" / "skills" / "sample" / "SKILL.md").unlink()
-
-    expected_removed = {
+def _sample_generated_paths() -> set[str]:
+    return {
         ".claude/commands/sample.md",
         ".cursor/commands/sample.md",
         ".github/prompts/sample.prompt.md",
         ".gemini/commands/sample.toml",
         ".claude/skills/sample/SKILL.md",
     }
+
+
+def test_generated_agent_assets_are_current() -> None:
+    for path, expected in render_files(ROOT).items():
+        assert path.exists(), f"{path.relative_to(ROOT)} is missing"
+        assert path.read_bytes() == expected, f"{path.relative_to(ROOT)} is stale"
+
+
+def test_sync_keeps_generated_assets_without_prune(tmp_path: Path) -> None:
+    _write_minimal_agent_sources(tmp_path)
+    written, removed = sync_agent_assets.write_files(tmp_path)
+    assert written
+    assert not removed
+
+    _delete_sample_shared_sources(tmp_path)
+    expected_removed = _sample_generated_paths()
     stale = {path.relative_to(tmp_path).as_posix() for path in sync_agent_assets.check_files(tmp_path)}
-    assert expected_removed <= stale
+    assert expected_removed.isdisjoint(stale)
 
     written, removed = sync_agent_assets.write_files(tmp_path)
+    assert not written
+    assert not removed
+    for relative_path in expected_removed:
+        assert (tmp_path / relative_path).exists()
+
+
+def test_sync_removes_generated_assets_with_prune(tmp_path: Path) -> None:
+    _write_minimal_agent_sources(tmp_path)
+    written, removed = sync_agent_assets.write_files(tmp_path)
+    assert written
+    assert not removed
+
+    _delete_sample_shared_sources(tmp_path)
+    expected_removed = _sample_generated_paths()
+    stale = {path.relative_to(tmp_path).as_posix() for path in sync_agent_assets.check_files(tmp_path, prune=True)}
+    assert expected_removed <= stale
+
+    written, removed = sync_agent_assets.write_files(tmp_path, prune=True)
     assert not written
     assert {path.relative_to(tmp_path).as_posix() for path in removed} == expected_removed
     for relative_path in expected_removed:

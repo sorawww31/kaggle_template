@@ -213,7 +213,7 @@ def _remove_empty_generated_parents(root: Path, path: Path) -> None:
         return
 
 
-def write_files(root: Path) -> tuple[list[Path], list[Path]]:
+def write_files(root: Path, *, prune: bool = False) -> tuple[list[Path], list[Path]]:
     written: list[Path] = []
     removed: list[Path] = []
     outputs = render_files(root)
@@ -225,33 +225,40 @@ def write_files(root: Path) -> tuple[list[Path], list[Path]]:
         path.write_bytes(content)
         written.append(path)
 
-    for path in _stale_generated_files(root, outputs):
-        path.unlink()
-        removed.append(path)
-        _remove_empty_generated_parents(root, path.parent)
+    if prune:
+        for path in _stale_generated_files(root, outputs):
+            path.unlink()
+            removed.append(path)
+            _remove_empty_generated_parents(root, path.parent)
 
     return written, removed
 
 
-def check_files(root: Path) -> list[Path]:
+def check_files(root: Path, *, prune: bool = False) -> list[Path]:
     stale: list[Path] = []
     outputs = render_files(root)
 
     for path, content in outputs.items():
         if not path.exists() or path.read_bytes() != content:
             stale.append(path)
-    stale.extend(_stale_generated_files(root, outputs))
+    if prune:
+        stale.extend(_stale_generated_files(root, outputs))
     return stale
 
 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Sync generated AI-agent adapter files.")
     parser.add_argument("--check", action="store_true", help="Exit non-zero if generated files are stale.")
+    parser.add_argument(
+        "--prune",
+        action="store_true",
+        help="Include generated files whose shared sources no longer exist; remove them during sync.",
+    )
     args = parser.parse_args()
 
     root = Path(__file__).resolve().parents[1]
     if args.check:
-        stale = check_files(root)
+        stale = check_files(root, prune=args.prune)
         if stale:
             print("Stale generated agent files:")
             for path in stale:
@@ -260,7 +267,7 @@ def main() -> int:
         print("Generated agent files are up to date.")
         return 0
 
-    written, removed = write_files(root)
+    written, removed = write_files(root, prune=args.prune)
     if not written and not removed:
         print("Generated agent files are already up to date.")
         return 0

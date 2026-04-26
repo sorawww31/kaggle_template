@@ -22,12 +22,17 @@ Why: Help contributors keep Codex, Cursor, Claude Code, GitHub Copilot, and Gemi
 uv run python tools/sync_agent_assets.py
 ```
 
-`.agents/` から削除したskillやcommandに対応する生成物は、同期時に削除されます。
+通常同期は必要な生成物を作成・更新します。`.agents/` から削除したskillやcommandに対応する生成物も削除したい場合は、厳密同期します。
+
+```sh
+uv run python tools/sync_agent_assets.py --prune
+```
 
 検証:
 
 ```sh
 uv run python tools/sync_agent_assets.py --check
+uv run python tools/sync_agent_assets.py --check --prune
 uv run pytest tests/test_agent_assets.py
 ```
 
