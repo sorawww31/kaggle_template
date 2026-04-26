@@ -2,4 +2,4 @@
 FROM gcr.io/kaggle-gpu-images/python:latest
 
 RUN pip install --no-cache-dir \
-    hydra-core 
+    hydra-core onnxruntime-gpu openvino onnxscript schedulefree

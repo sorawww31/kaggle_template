@@ -1,7 +1,8 @@
 # Where: tools/upload_dataset.py
 # What: Kaggle DatasetアップロードCLI
 # Why: 実験成果物を安全に一括アップロードし、再現管理を簡単にするため
-
+from dotenv import load_dotenv
+load_dotenv()
 import json
 import os
 import shutil
@@ -10,10 +11,10 @@ from typing import Any
 
 import click
 from click.core import ParameterSource
-from dotenv import load_dotenv
-from kaggle.api.kaggle_api_extended import KaggleApi
 
-load_dotenv()
+from kaggle.api.kaggle_api_extended import KaggleApi
+import subprocess
+
 
 
 def copy_directory(source_dir: Path, dest_dir: Path):
@@ -33,13 +34,12 @@ def copy_directory(source_dir: Path, dest_dir: Path):
     print(f"Copied {source_dir} to {dest_dir}")
 
 
-def upload_single(dir: Path, title: str, user_name: str, new: bool):
+def upload_single(dir: Path, title: str, user_name: str, new: bool, message: str = ""):
     """単一のディレクトリをKaggleデータセットとしてアップロードする。"""
     if "_" in title:
         title = title.replace("_", "-")
     tmp_dir = Path("./tmp")
     tmp_dir.mkdir(parents=True, exist_ok=True)
-
     copy_directory(dir, tmp_dir)
 
     # dataset-metadata.jsonを作成
@@ -52,23 +52,49 @@ def upload_single(dir: Path, title: str, user_name: str, new: bool):
         json.dump(dataset_metadata, f, indent=4)
 
     # api認証
-    api = KaggleApi()
-    api.authenticate()
+    # api = KaggleApi()
+    # api.authenticate()
 
+    # if new:
+    #     api.dataset_create_new(
+    #         folder=tmp_dir,
+    #         dir_mode="tar",
+    #         convert_to_csv=False,
+    #         public=False,
+    #     )
+    # else:
+    #     api.dataset_create_version(
+    #         folder=tmp_dir,
+    #         version_notes="",
+    #         dir_mode="tar",
+    #         convert_to_csv=False,
+    #     )
     if new:
-        api.dataset_create_new(
-            folder=tmp_dir,
-            dir_mode="tar",
-            convert_to_csv=False,
-            public=False,
-        )
+        subprocess.run([
+            "uv",
+            "run",
+            "kaggle",
+            "datasets",
+            "create",
+            "-p",
+            str(tmp_dir),
+            "--dir-mode",
+            "tar",
+        ], check=True)
     else:
-        api.dataset_create_version(
-            folder=tmp_dir,
-            version_notes="",
-            dir_mode="tar",
-            convert_to_csv=False,
-        )
+        subprocess.run([
+            "uv",
+            "run",
+            "kaggle",
+            "datasets",
+            "version",
+            "-p",
+            str(tmp_dir),
+            "-m",
+            str(message),
+            "--dir-mode",
+            "tar",
+        ], check=True)
 
     # delete tmp dir
     shutil.rmtree(tmp_dir)
@@ -76,10 +102,11 @@ def upload_single(dir: Path, title: str, user_name: str, new: bool):
 
 
 @click.command()
-@click.option("--title", "-t", default="sorawww31-models")
+@click.option("--title", "-t", default=f"sorawww31-models")
 @click.option("--dir", "-d", type=Path, default="./experiments")
-@click.option("--user_name", "-u", default=os.getenv("KAGGLE_USERNAME"))
+@click.option("--user_name", "-u", default=os.getenv("KAGGLE_USER_NAME"))
 @click.option("--new", "-n", is_flag=True)
+@click.option("--message", "-m", type=str, default="")
 @click.option(
     "--exp",
     "-e",
@@ -93,6 +120,7 @@ def main(
     dir: Path,
     user_name: str = "sorawww31",
     new: bool = False,
+    message: str = "",
     exp: str | None = None,
 ):
     """dir以下のファイルをKaggleデータセットとしてアップロードする。
@@ -107,6 +135,7 @@ def main(
         dir (Path): アップロードするファイルがあるディレクトリ (--exp未指定時に使用)
         user_name (str, optional): kaggleのユーザー名.
         new (bool, optional): 新規データセットとしてアップロードするかどうか.
+        message (str, optional): データセットのバージョンノート.
         exp (str, optional): 実験名 (例: exp007).
     """
     if exp is not None:
@@ -123,9 +152,9 @@ def main(
         # -t/--title が明示指定された場合は優先し、未指定なら従来通り自動決定
         title_source = ctx.get_parameter_source("title")
         if title_source == ParameterSource.COMMANDLINE:
-            dataset_title = title
+            dataset_title = f"[{os.getenv('COMPETITION')}]" + title
         else:
-            dataset_title = targets[0].name.replace("_", "-")
+            dataset_title = f"{os.getenv('COMPETITION')}-" + targets[0].name.replace("_", "-")
 
         # 全ターゲットを1つのtmpディレクトリにまとめる
         tmp_dir = Path("./tmp")
@@ -141,6 +170,10 @@ def main(
             # experiments/exp007_scale -> tmp/experiments/
             dest = tmp_dir / target.parent.name
             shutil.copytree(target, dest)
+            if dest.name != "outputs":
+                # utils/も必要に応じてコピー
+                print(f"  Also copying utils/ for {target.name}")
+                shutil.copytree("./utils", dest / "utils", dirs_exist_ok=True)  
             print(f"  - {target} -> {dest}")
 
         # dataset-metadata.jsonを作成
@@ -168,7 +201,7 @@ def main(
         else:
             api.dataset_create_version(
                 folder=tmp_dir,
-                version_notes="",
+                version_notes=message,
                 dir_mode="tar",
                 convert_to_csv=False,
             )
@@ -177,7 +210,7 @@ def main(
         print(f"Uploaded as '{dataset_title}'")
     else:
         # 従来の動作: --dir と --title を使う
-        upload_single(dir, title, user_name, new)
+        upload_single(dir, title, user_name, new, message)
 
 
 if __name__ == "__main__":
