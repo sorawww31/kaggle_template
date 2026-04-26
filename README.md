@@ -65,6 +65,38 @@
 cp .env.example .env
 ```
 を行い、`.env`に必要事項を記入
+
+## AIエージェント設定
+
+Codex, Cursor, Claude Code, GitHub Copilot, Gemini CLI 向けの指示・skill・command・MCP設定を用意しています。
+
+- 共通指示: `AGENTS.md`
+- 共通skill: `.agents/skills/*/SKILL.md`
+- 共通command: `.agents/commands/*.md`
+- 同期: `uv run python tools/sync_agent_assets.py`
+- 検証: `uv run python tools/sync_agent_assets.py --check`
+
+新しいskillやcommandを追加する場合は、まず `.agents/` 以下の共通ソースへ追加し、その後に同期します。
+`.agents/` 以下から削除したskillやcommandに対応する生成物は、同期時に各エージェント用ディレクトリから削除されます。
+
+```sh
+# skillを追加する場合
+.agents/skills/<skill-name>/SKILL.md
+
+# commandを追加する場合
+.agents/commands/<command-name>.md
+
+# 各エージェント用ファイルへ反映
+uv run python tools/sync_agent_assets.py
+
+# 同期漏れを確認
+uv run python tools/sync_agent_assets.py --check
+```
+
+`CLAUDE.md`, `GEMINI.md`, `.claude/commands`, `.cursor/commands`, `.github/prompts`, `.gemini/commands`, `.claude/skills` は同期生成物です。通常は直接編集せず、`AGENTS.md` または `.agents/` 以下を編集してから同期してください。
+
+Kaggle MCPを使う場合は、`KAGGLE_API_TOKEN` を環境変数として設定してください。詳細は `docs/agent-integrations.md` を参照してください。
+
 ## Docker による環境構築
 Dockerが利用できない方は、同md下部のuvによる環境設定を参照してください。
 ```sh
