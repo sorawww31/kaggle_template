@@ -21,7 +21,7 @@ Why: Keep agent implementation plans concrete, reviewable, and grounded in verif
 
 設計書を作る前に、リポジトリルートから次を全文読む。
 
-- `.agents/docs/templates/plan-template.md`
+- `.agents/skills/plan-create/docs/plan-template.md`
 
 テンプレートが存在しない場合は、作業を止めてユーザーに知らせる。別形式で勝手に代替しない。
 
