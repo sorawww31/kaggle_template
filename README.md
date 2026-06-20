@@ -1,7 +1,9 @@
 # Kaggle テンプレート
 
 ## コンペを始める
-
+### 0. GitHubからリポジトリを作成する
+GitHubページの右上「Use this template」から、リポジトリを作成する。
+その後、自分の環境に git cloneする。
 ### 1. 環境変数を設定する
 
 `.env.example`をコピーし、Kaggleユーザー名、API token、出場するコンペのslugを`.env`へ記入する。
@@ -39,61 +41,16 @@ $kaggle-fetch-competition を使ってCOMPETITIONのコンペをオンボーデ�
 AIやKaggle MCPを使わず、Competitionデータを直接取得する場合は次を実行する。
 
 ```sh
-uv run --with 'kagglehub>=1.0.0' python tools/download_dataset.py competition "$COMPETITION"
+uv run python tools/download_dataset.py competition "$COMPETITION"
 ```
 
 Kaggle Datasetを追加する場合は`owner/dataset`形式で指定する。
 
 ```sh
-uv run --with 'kagglehub>=1.0.0' python tools/download_dataset.py dataset owner/dataset-slug
+uv run python tools/download_dataset.py dataset owner/dataset-slug
 ```
 
 既存の保存先を置き換える必要がある場合だけ`--force`を付ける。
-
-## コンペ概要
-
-- 取得日: 2026-04-26
-- Kaggle slug: `birdclef-2026`
-- 公式URL: https://www.kaggle.com/competitions/birdclef-2026
-- 主催: Google Research & Cornell Lab of Ornithology
-
-BirdCLEF+ 2026 は、ブラジル・パンタナル湿地で収録された連続音声から、鳥類・両生類・哺乳類・爬虫類・昆虫などの発声種を識別する音響分類コンペです。目的は、広域かつ継続的な受動的音響モニタリングを機械学習で支援し、生物多様性の変化や保全活動の効果を把握しやすくすることです。
-
-### データ
-
-- `train_audio/`: Xeno-canto と iNaturalist 由来の短い個別録音。32 kHz、`ogg`形式。
-- `train_soundscapes/`: テスト録音に近い地点の追加音声。一部は`train_soundscapes_labels.csv`で5秒区間ごとの専門家ラベル付き。
-- `test_soundscapes/`: 提出Notebook採点時に隠しテストとして約600本の1分音声が配置される。
-- `train.csv`: `primary_label`、`secondary_labels`、緯度経度、録音者、filename、rating、collectionなどのメタデータ。
-- `taxonomy.csv`: 234クラスの分類情報。提出列の`primary_label`に対応する。
-- `sample_submission.csv`: `row_id`と234種ID列を持つ提出例。各行は5秒窓の確率予測。
-
-### 評価・提出制約
-
-- 評価指標: 真陽性がないクラスをスキップするmacro ROC-AUC系指標。
-- 提出形式: 各`row_id`について、各species列に存在確率を出すmulti-label予測。
-- Code Competition: Notebook提出のみ。CPU Notebookは90分以内、GPU提出は実質無効、Internet disabled、`submission.csv`が必要。
-- 期限: Entry/Team Merger Deadline は2026-05-27 23:59 UTC、Final Submission Deadline は2026-06-03 23:59 UTC。
-
-### 重要ルール
-
-- 1日あたり最大5 submission、最終提出は最大2件選択。
-- チーム上限は5人。
-- データ利用はCC BY-NC-SA系で、非商用・コンペ参加・Kaggle forum・学術/教育用途が中心。
-- 外部データや外部モデルは、参加者全員が合理的にアクセスでき、コンペ固有ルールに反しないものに限る。
-- 入賞時は、最終モデルのコード・ドキュメント提出と、勝者コードのOpen Sourceライセンス要件がある。
-
-### 開催履歴メモ
-
-- 2026: ブラジル・パンタナル。鳥類以外も含む234クラスの音響種識別。
-- 2025: コロンビア Middle Magdalena Valley / El Silencio Natural Reserve。鳥類・両生類・哺乳類・昆虫など複数分類群。
-- 2024: インド Western Ghats。主に鳥類、希少・固有・夜行性種の音響識別。
-- 2023: 東アフリカ/ケニアの鳥類音声。264 bird species、padded cmAP。
-- 2022: ハワイの希少・絶滅危惧鳥類を対象にした音響識別。
-
-### 取得元
-
-Kaggle MCPで`search_content`、`list_competition_pages`、`list_competition_data_files`を確認しました。DiscussionはMCPのTopic絞り込みでKernel/Benchmarkが混在したため、現時点ではREADMEへ未検証情報を採用していません。
 
 ## 特徴
 - Docker によるポータブルなKaggleと同一の環境
