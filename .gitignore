@@ -170,3 +170,8 @@ cython_debug/
 #.idea/
 
 .jupyter-setting
+
+.claude/skills
+.codex/skills
+.gemini/skills
+.cursor/skills

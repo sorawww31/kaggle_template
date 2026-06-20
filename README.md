@@ -117,34 +117,20 @@ Codex, Cursor, Claude Code, GitHub Copilot, Gemini CLI 向けの指示・skill�
 - 共通指示: `AGENTS.md`
 - 共通skill: `.agents/skills/*/SKILL.md`
 - 共通command: `.agents/commands/*.md`
-- 同期: `uv run python tools/sync_agent_assets.py`
-- 厳密同期: `uv run python tools/sync_agent_assets.py --prune`
-- 検証: `uv run python tools/sync_agent_assets.py --check`
 
-新しいskillやcommandを追加する場合は、まず `.agents/` 以下の共通ソースへ追加し、その後に同期します。
-通常同期は必要な生成物を作成・更新します。`.agents/` 以下から削除したskillやcommandに対応する生成物も削除したい場合は、`--prune` 付きで厳密同期します。
+### Skillsの管理
+
+Skillはすべて `.agents/skills/` を正として管理します。ClaudeやCodexなど各エージェント側のSkillディレクトリは直接編集しません。Skillを追加・更新・削除した後は、`.agents/sync_skills.sh` を実行して各エージェントへ反映します。
 
 ```sh
 # skillを追加する場合
 .agents/skills/<skill-name>/SKILL.md
 
-# commandを追加する場合
-.agents/commands/<command-name>.md
-
-# 各エージェント用ファイルへ反映
-uv run python tools/sync_agent_assets.py
-
-# 共通ソースと同じ形にそろえ、不要な生成物も削除
-uv run python tools/sync_agent_assets.py --prune
-
-# 同期漏れを確認
-uv run python tools/sync_agent_assets.py --check
-
-# 不要な生成物も含めて厳密確認
-uv run python tools/sync_agent_assets.py --check --prune
+# Claude、Codex、Gemini、Cursorへ反映
+bash .agents/sync_skills.sh
 ```
 
-`CLAUDE.md`, `GEMINI.md`, `.claude/commands`, `.cursor/commands`, `.github/prompts`, `.gemini/commands`, `.claude/skills` は同期生成物です。通常は直接編集せず、`AGENTS.md` または `.agents/` 以下を編集してから同期してください。
+`.claude/skills/`、`.codex/skills/`、`.gemini/skills/`、`.cursor/skills/` は同期生成物です。Skillの管理は必ず `.agents/skills/` で行ってください。
 
 Kaggle MCPを使う場合は、`KAGGLE_API_TOKEN` を環境変数として設定してください。詳細は `docs/agent-integrations.md` を参照してください。
 
