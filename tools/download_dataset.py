@@ -15,11 +15,11 @@ from typing import Callable, NamedTuple
 from dotenv import load_dotenv
 load_dotenv()
 
-import kagglehub
-import kagglehub.clients as kagglehub_clients
-import requests
+import kagglehub  # noqa: E402
+import kagglehub.clients as kagglehub_clients  # noqa: E402
+import requests  # noqa: E402
 
-from kagglehub.config import get_cache_folder
+from kagglehub.config import get_cache_folder  # noqa: E402
 
 
 
@@ -200,9 +200,41 @@ def mirror_path(source: Path, target: Path, force: bool) -> Path:
     return target
 
 
+def _strip_version_path(parts: tuple[str, ...], *, version_index: int, version_marker: str | None) -> tuple[str, ...]:
+    # kagglehub caches versioned resources under `versions/<n>` or a bare version folder.
+    # The repository tree keeps only the resource root, so we drop that cache-only segment.
+    if version_marker is None:
+        if len(parts) > version_index:
+            return parts[:version_index] + parts[version_index + 1 :]
+        return parts
+
+    if len(parts) > version_index + 1 and parts[version_index] == version_marker:
+        return parts[:version_index] + parts[version_index + 2 :]
+    return parts
+
+
 def kagglehub_target_path(resource: str, cache_path: Path) -> Path:
     cache_root = Path(get_cache_folder()).resolve()
     relative = cache_path.resolve().relative_to(cache_root)
+
+    if resource == "dataset":
+        # kagglehub: datasets/<owner>/<dataset>/versions/<n>/...
+        parts = relative.parts
+        if len(parts) < 3 or parts[0] != "datasets":
+            raise ValueError(f"Unexpected dataset cache layout: {relative}")
+        parts = _strip_version_path(parts, version_index=3, version_marker="versions")
+        return input_root() / Path(*parts)
+
+    if resource == "competition":
+        return input_root() / relative
+
+    if resource == "model":
+        # kagglehub: models/<owner>/<model>/<framework>/<variation>/<n>/...
+        parts = relative.parts
+        if len(parts) < 6 or parts[0] != "models":
+            raise ValueError(f"Unexpected model cache layout: {relative}")
+        parts = _strip_version_path(parts, version_index=5, version_marker=None)
+        return input_root() / Path(*parts)
 
     if resource == "notebook_output":
         # kagglehub keeps notebook outputs under notebooks/<owner>/<slug>/output/.
@@ -210,7 +242,8 @@ def kagglehub_target_path(resource: str, cache_path: Path) -> Path:
         parts = relative.parts
         if len(parts) < 4 or parts[0] != "notebooks" or parts[3] != "output":
             raise ValueError(f"Unexpected notebook output cache layout: {relative}")
-        return input_root() / "notebook-outputs" / Path(*parts[1:3], *parts[4:])
+        parts = _strip_version_path(parts, version_index=4, version_marker="versions")
+        return input_root() / Path("notebook-outputs", *parts[1:3], *parts[4:])
 
     return input_root() / relative
 
