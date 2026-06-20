@@ -1,4 +1,54 @@
-# BirdCLEF+ 2026 実験リポジトリ
+# Kaggle テンプレート
+
+## コンペを始める
+
+### 1. 環境変数を設定する
+
+`.env.example`をコピーし、Kaggleユーザー名、API token、出場するコンペのslugを`.env`へ記入する。
+
+```sh
+cp .env.example .env
+```
+
+```dotenv
+KAGGLE_USER_NAME=your_kaggle_user_name
+KAGGLE_API_TOKEN=your_kaggle_api_token
+COMPETITION=birdclef-2026
+```
+
+秘密情報を含む`.env`はcommitしない。AIエージェントを起動する前に、同じshellで環境変数を読み込む。
+
+```sh
+set -a
+source .env
+set +a
+```
+
+### 2. AIでオンボーディングする
+
+Competitionデータ、公式ルール、Discussion、公開Notebook、EDAを一括で準備する場合は、次のSkillを使う。
+
+```text
+$kaggle-fetch-competition を使ってCOMPETITIONのコンペをオンボーディングして
+```
+
+データ取得だけを依頼する場合は`$import-kaggle-resource`を使う。
+
+### 3. 手動でデータを取り込む
+
+AIやKaggle MCPを使わず、Competitionデータを直接取得する場合は次を実行する。
+
+```sh
+uv run --with 'kagglehub>=1.0.0' python tools/download_dataset.py competition "$COMPETITION"
+```
+
+Kaggle Datasetを追加する場合は`owner/dataset`形式で指定する。
+
+```sh
+uv run --with 'kagglehub>=1.0.0' python tools/download_dataset.py dataset owner/dataset-slug
+```
+
+既存の保存先を置き換える必要がある場合だけ`--force`を付ける。
 
 ## コンペ概要
 

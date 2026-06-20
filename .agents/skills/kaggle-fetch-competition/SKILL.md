@@ -1,84 +1,169 @@
 ---
 name: kaggle-fetch-competition
-description: Kaggle MCPなどで現在のリポジトリが対象にしているKaggleコンペを特定し、公式ページ、データ説明、ルール、評価、提出制約、賞金、開催履歴、Discussion候補を取得してREADME冒頭へ要約する。ユーザーが「Kaggleコンペ情報をfetch」「READMEにコンペ概要を追加」「BirdCLEFなど参加中コンペの情報をまとめて」「discussionから有用情報を拾って」などを依頼したときに使う。
+description: 環境変数COMPETITIONのKaggleコンペを開始するため、参加・データ取得、公式ページと厳密なルールの文書化、Discussionと公開Notebookの動向調査、最高voteのEDA Notebook導入とMarkdownセルの日本語化を統括する。ユーザーが「コンペをオンボーディング」「新しいKaggleコンペを開始」「コンペ情報・ルール・流行手法をまとめて」「EDAまで用意」などを依頼したときに使う。
 ---
 
 <!--
 SKILL.md
 Where: .agents/skills/kaggle-fetch-competition.
-What: Fetch Kaggle competition context and update README.
-Why: Keep experiment repositories grounded in current official competition docs.
+What: Onboard the competition selected by COMPETITION.
+Why: Reach a documented, reproducible starting line before experiments begin.
 -->
 
 # Kaggle Fetch Competition
 
-このSkillは、Kaggle MCPを優先して参加中コンペの公式情報を集め、READMEのタイトル直下に短いコンペ概要を作るための手順を定める。
-Kaggle上の情報は変わるため、推測だけでREADMEを書かず、取得元と取得日を明記する。
+`COMPETITION`のコンペについて、データ、公式仕様、ルール、Discussion、公開Notebook、EDAを一続きで準備する。
+推測を事実として書かず、取得日、Kaggle上のID、URL、未確認事項を残す。
 
-## 前提確認
+## 責務
 
-1. リポジトリ内のREADME、config、実験ディレクトリ名、環境変数名からコンペslug候補を探す。
-2. ユーザーがslugや年を明示した場合はそれを優先する。例: `birdclef-2026`。
-3. Kaggle MCPツールが未ロードなら、tool discoveryでKaggle competition/search/page/data file系ツールを探す。
-4. `context()` MCPが使える環境なら、Kaggle APIや利用ライブラリの挙動確認に使う。使えない場合は「context MCPは利用不可」と明示し、Kaggle MCPまたは公式Kaggleページで確認する。
-5. READMEに未コミット差分がある場合は、既存差分を読んでから編集範囲を限定する。
+- Competitionデータ取得は`$import-kaggle-resource`へ委譲する。
+- Discussion本文・コメント調査は`$kaggle-discussion-research`の調査手順を使う。
+- 公開Notebookの系譜・重複・手法調査は`$kaggle-notebook-research`の調査手順を使う。
+- このSkillは順序、共通出力先、公式情報との整合、EDA導入、完了判定を統括する。
 
-## 情報取得
+## 並列実行
 
-次をKaggle MCPで取得する。
+1. 対象slug、参加状態、必要容量、保存先、既存差分を確認するまでは直列に進める。
+2. 事前確認後、実行環境にサブエージェント機能があれば、`$import-kaggle-resource`によるデータ取得と検証を専用エージェントへ委譲する。
+   - ツール実行とarchiveの安全検査を完遂できる範囲で、利用可能な中の最も安価なモデルを明示指定して呼び出す。
+   - モデルを指定できない環境では既定モデルで委譲し、指定できなかったことを最終報告に残す。
+3. データ取得の完了を待たず、メインエージェントは公式情報の収集と`overview.md`、`rules.md`の作成を進める。余りの並列枠があれば、Discussion調査とNotebook調査・EDA導入も別のエージェントへ委譲する。データ取得用の枠を優先する。
+4. 並列タスク間で同じファイルを編集しない。データ担当のリポジトリ内の永続成果物は`input/competitions/<slug>/`だけとし、Discussion担当は`discussion.md`、Notebook担当は`notebooks.md`とEDA Notebookだけを書き込む。
+5. `data-and-evaluation.md`の公式仕様部分はデータ取得中に作成してよい。実データのschema、欠損、件数、公式説明との差分は、データ取得とファイル数検証の完了後に追記する。展開中のデータは読まない。
+6. 最終整合性確認の前にすべてのタスクを待ち合わせ、成否、未確認事項、作成・変更パスを確認する。データ取得または件数検証が失敗した場合、他の調査が完了していても全体を成功扱いにしない。
+7. サブエージェント機能がなければ直列に実行し、その制約を報告する。shellプロセスを起動したまま放置するfire-and-forgetは行わない。
 
-1. コンペ検索:
-   - `search_content`でslug候補を検索する。
-   - `document_type == COMPETITION`、slug、title、subtitle、deadline、team_count、team_rank、prize、joined/bookmarked状態を確認する。
-   - 検索結果が混ざる場合は、`document_type`とslug一致だけを採用する。
-2. 公式ページ:
-   - `list_competition_pages(competitionName=<slug>)`を呼ぶ。
-   - 優先して読むページ: `abstract`、`Description`、`data-description`、`Timeline`、`Evaluation`、`rules`、`Prizes`、`Code Requirements`、`Acknowledgements`。
-   - ルール本文は長いので、READMEには参加・提出・外部データ・ライセンス・コード要件だけを要約する。
-3. データファイル:
-   - `list_competition_data_files(competitionName=<slug>, pageSize=100)`を呼ぶ。
-   - 全ファイルを貼らず、トップレベルファイルと主要ディレクトリ単位で要約する。
-   - 音声・画像など大量ファイルは件数例、命名規則、サンプリング仕様を`data-description`から補う。
-4. Discussion:
-   - `search_content`で`documentTypes=["Topic"]`、`discussionFilters.sourceType="Competition"`、可能なら`competitionIds`を指定して検索する。
-   - 取得結果は必ず`document_type == TOPIC`だけを採用する。
-   - Kaggle MCPがTopicに絞れずKernelやBenchmarkを返す場合は、READMEに憶測を書かず「Discussion候補はMCP検索で未確定」とする。
-   - 公式KaggleのDiscussionページをブラウズできる環境では、Kaggle公式URLだけを使って上位/新着/host投稿を確認する。
-5. 開催履歴:
-   - 年次コンペならslugの年を差し替え、`birdclef-2026`なら`birdclef-2025`、`birdclef-2024`のように候補を作る。
-   - 各候補について`search_content`または`list_competition_pages`で存在確認する。
-   - 存在確認できた年、title、subtitle、地域/対象、評価・データ上の大きな違いだけを短くまとめる。
+## 出力
 
-## README更新
+コンペslugを`<slug>`として、次を作成する。
 
-READMEの冒頭だけを更新し、既存の環境構築・実験管理説明は維持する。
+```text
+docs/competitions/<slug>/
+├── overview.md
+├── rules.md
+├── data-and-evaluation.md
+├── discussion.md
+└── notebooks.md
 
-1. タイトル直後に`## コンペ概要`を置く。既に同名セクションがあればそこだけ更新する。
-2. 概要セクションは次の順にする。
-   - 取得日、コンペURL、Kaggle slug。
-   - 目的: 何を予測するコンペか。
-   - データ: 主要ファイル、学習/テスト構造、隠しテストの注意。
-   - 評価・提出: metric、submission形式、Notebook/CPU/Internetなどの制約。
-   - 重要ルール: 外部データ、データライセンス、チーム/提出上限、最終期限。
-   - 開催履歴: 確認できた過去年と大きな違い。
-   - Discussionメモ: 確認できたTopicだけ。未確認ならその旨。
-3. 原文の長い引用は避け、要約する。短い固有名詞、ファイル名、metric名はそのまま使う。
-4. 取得元はKaggle公式URLまたはKaggle MCPページ名として明記する。
-5. ユーザーの既存README差分を戻さない。
+notebook/EDA/
+└── <owner>__<notebook-slug>.ipynb
+```
 
-## BirdCLEF向けの注意
+各Markdownには冒頭コメントを置き、`Where`、`What`、`Why`を記す。
+ディレクトリだけを先に追加する場合は`.gitkeep`を使う。成果物作成後も不要な`.gitkeep`を削除する必要はない。
 
-BirdCLEF系では次を特に確認する。
+## 1. 対象を確定する
 
-- 年ごとに地域、対象分類群、ラベル数、データ構成、評価実装が変わる。
-- `test_soundscapes`は提出Notebook実行時に隠しテストが配置されることがある。
-- 5秒窓ごとのmulti-label確率提出か、species列数はいくつかを確認する。
-- 外部データは「公開かつ参加者全員が合理的にアクセス可能」か、コンペ固有ルールと矛盾しないかを確認する。
-- Xeno-canto、iNaturalistなど元データサイトへの負荷やスクレイピング規約に注意する。
+1. プロセス環境の`COMPETITION`を読む。空なら停止し、設定を依頼する。
+2. `.env.example`や類似slugから推測しない。ユーザーが明示的に別slugを指定した場合だけ優先する。
+3. Kaggle MCPの`get_competition`でslug、title、URL、deadline、entrant deadline、team count、team rank、参加状態を確認する。
+4. MCP結果のslugが`COMPETITION`と一致しなければ停止する。
+5. 既存の`docs/competitions/<slug>/`、`notebook/EDA/`、README、AGENTS.mdの差分を読み、ユーザーの追記を戻さない。
 
-## 検証
+## 2. 参加とデータを準備する
 
-1. 編集後にREADMEとSKILL.mdを読み直し、見出し順とMarkdownの崩れを確認する。
-2. skillを追加した場合は、skill-creatorの`quick_validate.py`で対象skillを検証する。
-3. `.claude`など同期生成物は、ユーザーが明示しない限り編集しない。
-4. 最後に`git diff -- README.md .agents/skills/kaggle-fetch-competition`を確認し、変更範囲を報告する。
+1. `$import-kaggle-resource`を使う。
+2. `user_has_entered == true`を確認する。未参加でMCPから規約同意できない場合は、Kaggle上での手動同意を依頼する。
+3. Competitionデータを`input/competitions/<slug>/`へ取得する。
+4. MCPの総ファイル数とローカル件数を比較し、一致しなければ後続調査を成功扱いにしない。
+
+## 3. 公式情報を収集する
+
+Kaggle MCPの公式Competition情報を一次根拠として取得する。
+
+1. `get_competition`で基本情報、期限、賞金、team/submission制約、Notebook提出要否を取得する。
+2. `list_competition_pages`で少なくとも次を確認する。
+   - Overview / Description
+   - Data Description
+   - Evaluation
+   - Timeline
+   - Rules
+   - Prizes
+   - Code Requirements
+   - Acknowledgements / Licenses
+3. `get_competition_data_files_summary`と`list_competition_data_files`を全ページ確認する。
+4. 公式本文にない事項を一般的なKaggle慣行から補完しない。
+5. 公式ページ同士に矛盾があれば、Rulesと更新日の新しいhost告知を優先し、矛盾自体を記録する。
+
+## 4. 公式ドキュメントを書く
+
+### `overview.md`
+
+次を記す。
+
+- 取得日、title、slug、URL、host、category、賞金、開催状態。
+- 目的、予測対象、利用場面、タスク種別。
+- 開始、entry、team merge、最終提出の各期限をUTCとJSTで併記する。
+- team数、自分の参加・rank状態。
+- 重要リンクとSource Index。
+
+### `rules.md`
+
+Rules本文を要約し、項目ごとに根拠ページ・節・確認日を付ける。
+
+- eligibility、参加・team merge・最大team size。
+- 日次提出上限、最終提出本数、private/public leaderboardの扱い。
+- competition dataの利用範囲、private sharing、再配布、アクセス制御。
+- external data、事前学習model、生成AI、手動ラベル、追加annotationの可否と公開条件。
+- code sharing、open source、winner obligations、再現性、ライセンス。
+- 複数アカウント、協力、leak、禁止行為。
+- Notebook提出ならCPU/GPU、Internet、runtime、出力、再実行、外部依存制約。
+- 賞金、受賞資格、提出物、期限、税務・本人確認など参加判断に必要な条件。
+- hostによる変更権限と、確認できたルール更新・公式訂正。
+
+断定できない項目は`未確認`とし、一般論で埋めない。長い原文引用は避ける。
+
+### `data-and-evaluation.md`
+
+次を記す。
+
+- 全ファイル数、総容量、主要ディレクトリ、ファイル形式。
+- train/test構造、target、ID、sample submission、hidden testの有無。
+- 重要column、欠損、単位、時系列・group・重複・leak候補。
+- metric名、数式、最適化方向、集約単位、tie/NaN/clipなどの注意。
+- public/private split、shake-upやCV設計に関係する既知情報。
+- submission列、行数、型、順序、Notebook提出手順。
+- 公式説明と実データの不一致。大規模データは全件読まず、代表sampleとschemaを検証する。
+
+## 5. Discussionを調査する
+
+1. `$kaggle-discussion-research`の候補収集、本文・コメント・返信確認、ノイズ除去を行う。
+2. 出力先だけ`docs/competitions/<slug>/discussion.md`へ統一する。
+3. Top/Hot/Recent/Active、host/admin告知、データ不備、ルール訂正、CV/LB乖離、再現可能なbaselineを確認する。
+4. 「host確定」「複数参加者が再現」「単一参加者の仮説」「自分の推定」を分ける。
+5. 現在流行している手法は、直近更新、複数投稿・Notebookでの採用、score、再現報告を根拠に判定する。
+
+## 6. 公開Notebookを調査する
+
+1. `$kaggle-notebook-research`のVoteCount、Hotness、DateRun、CommentCount、検索語の複数軸で候補を集める。
+2. 出力先だけ`docs/competitions/<slug>/notebooks.md`へ統一する。
+3. fork親子、copy、small modificationをまとめ、同じ手法を重複集計しない。
+4. EDA、baseline、training、inference、ensembleを分け、利用データ・model・score・更新日・votesを記録する。
+5. 「高voteの定番」と「直近で増えている手法」を別々にまとめる。
+
+## 7. 最高voteのEDAを導入する
+
+1. 対象コンペで`search_notebooks`を`VoteCount`順に検索し、`EDA`、`data exploration`、`visualization`、`starter`でも補完する。
+2. `search_content`でも公開Kernelを集め、competition ID/slugの一致、privacy、votes、更新日、fork親を確認する。
+3. 上位候補の`get_notebook_info`本文を読み、主目的がEDAであることを確認する。titleだけでEDA判定しない。
+4. 条件を満たす公開EDAの中で最大votesの1件を選ぶ。取得日、votes、候補範囲、選定理由を`notebooks.md`へ残す。
+   - 有効なEDA候補が0件なら非EDAで代用せず、その事実と検索範囲を記録して導入を停止する。
+5. author、URL、version、licenseを確認する。派生物の再配布条件が不明または禁止なら、書き込み前にユーザーへ確認する。
+6. `get_notebook_info`の`blob.source`を一時保存し、`notebook/EDA/<owner>__<slug>.ipynb`へ配置する。
+7. Markdownセルの自然言語だけを日本語へ翻訳する。
+   - codeセルの`source`、comments、文字列、magic、outputs、execution countを変更しない。
+   - 数式、URL、引用元、filename、column名、API名、model名を維持する。
+   - HTMLを含むMarkdownは構造を壊さず、表示テキストだけを翻訳する。
+8. 原本と翻訳版を比較し、codeセルの`source`とoutputsが同一、Notebook JSONが妥当であることを確認する。
+9. author、原本URL、version、votes、license、翻訳範囲を`notebooks.md`へ記録する。
+
+## 8. 整合性を確認する
+
+1. 並列タスクがすべて終了し、中途のダウンロードや展開プロセスが残っていないことを確認する。
+2. 5つのMarkdownでtitle、slug、日付、metric、期限、制約が一致することを確認する。
+3. rulesとDiscussionが矛盾する場合はrulesを優先し、Discussion側に注意を書く。
+4. Notebook手法がexternal data/model制約に抵触しないか確認する。
+5. すべての重要な断定にKaggle URL、page名、topic/comment ID、Notebook refのいずれかを付ける。
+6. 未取得ページ、未読topic、取得できないcomments、未確認licenseを隠さない。
+7. 最後に作成物一覧、データ件数、調査範囲、導入EDA、使用したデータ取得モデルまたはモデル指定不可の事実、残課題を報告する。

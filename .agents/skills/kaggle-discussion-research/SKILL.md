@@ -24,7 +24,7 @@ Discussion検索はノイズが混ざるため、取得元URL、topic ID、comme
    - 「有用投稿」は検索語だけに頼らず、Top、Hot、Recent、Active、高vote、高コメント数、host/admin投稿、データ不備、ルール、強いbaseline、LB共有、推論高速化を広く見る。
 2. Kaggle MCPツールが未ロードなら、tool discoveryで`search_content`、`list_forum_topics`、`get_forum_topic`、`get_writeup_by_topic`を探す。
 3. `context()` MCPが使える環境なら、Kaggle APIや利用ライブラリの挙動確認に使う。使えない場合は「context MCPは利用不可」と明示し、Kaggle MCPの結果を根拠にする。
-4. 出力先は`docs/discussion/`に限定する。ディレクトリが無ければ作成する。既存ファイルを更新する場合は、先に全文を読んでユーザーの追記を戻さない。
+4. 出力先は通常`docs/discussion/`とする。`kaggle-fetch-competition`から呼ばれた場合は`docs/competitions/<slug>/discussion.md`を使う。既存ファイルを更新する場合は、先に全文を読んでユーザーの追記を戻さない。
 
 ## Kaggle MCPで調査する
 

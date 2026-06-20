@@ -25,7 +25,7 @@ Notebook調査は同名fork、丸写し、小さな後処理追加、古い高vo
    - 「参加中コンペ」ならREADME、config、実験ディレクトリ名、Kaggle MCPのcompetition検索から候補を確認する。
 2. Kaggle MCPツールが未ロードなら、tool discoveryで`search_notebooks`、`search_content`、`get_notebook_info`、`list_notebook_files`、`list_notebook_session_output`、`download_notebook_output`を探す。
 3. `context()` MCPが使える環境ならKaggle APIや利用ライブラリの公式挙動確認に使う。使えない場合は「context MCPは利用不可」と明示し、Kaggle MCPの結果を根拠にする。
-4. 出力先は`docs/notebooks/`に限定する。既存ファイルを更新する場合は先に全文を読み、ユーザーの追記を戻さない。
+4. 出力先は通常`docs/notebooks/`とする。`kaggle-fetch-competition`から呼ばれた場合は`docs/competitions/<slug>/notebooks.md`を使う。既存ファイルを更新する場合は先に全文を読み、ユーザーの追記を戻さない。
 
 ## 候補を広く集める
 
