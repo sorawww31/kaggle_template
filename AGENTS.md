@@ -54,8 +54,7 @@ Motto: "Small, clear, safe steps in Japanese - always grounded in real docs."
 - Shared instructions source: `AGENTS.md`
 - Shared skill source: `.agents/skills/*/SKILL.md`
 - Shared command source: `.agents/commands/*.md`
-- Generated adapters are refreshed by `uv run python tools/sync_agent_assets.py`.
-- Verify generated adapters with `uv run python tools/sync_agent_assets.py --check`.
+- Generated skill copies are refreshed by `bash .agents/sync_skills.sh`.
 
 ## Kaggle Competition Onboarding## This Repository's Agents
 このリポジトリはML実験用のリポジトリのため、各コードには、シンプルさを何より優先せよ。冗長な表現とうは必要ない

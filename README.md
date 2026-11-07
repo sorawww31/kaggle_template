@@ -139,6 +139,22 @@ bash .agents/sync_skills.sh
 
 `.claude/skills/`、`.codex/skills/`、`.gemini/skills/`、`.cursor/skills/` は同期生成物です。Skillの管理は必ず `.agents/skills/` で行ってください。
 
+### Kaggle向け公開Skill
+
+公開Skillの手順をこのテンプレートに合わせて採用しています。各Skillに参照元のコミットを記載しています。スター数は配布元リポジトリの2026年11月7日時点の表示です。
+
+| Skill | 上流スター | 担当 |
+|---|---:|---|
+| [`kaggle-cli`](.agents/skills/kaggle-cli/SKILL.md) | 約7,600 | Kaggle公式CLIの認証、リモート実行、ログ取得、提出 |
+| [`kaggle-learner`](.agents/skills/kaggle-learner/SKILL.md) | 約6,000 | 過去コンペの上位解法から学ぶ |
+| [`create-harness`](.agents/skills/create-harness/SKILL.md)、[`onboard-open-spiel-game`](.agents/skills/onboard-open-spiel-game/SKILL.md) | 459 | 対戦するLLMの実装、OpenSpielゲームの追加 |
+| [`nvidia-kaggle-skill`](.agents/skills/nvidia-kaggle-skill/SKILL.md) | 349 | 指定Notebookの入力と実行環境をローカルで再現 |
+| [`kaggle-benchmarks`](.agents/skills/kaggle-benchmarks/SKILL.md)、[`kaggle-standardized-agent-exam`](.agents/skills/kaggle-standardized-agent-exam/SKILL.md) | 204 | LLM評価タスクの作成、Kaggle公式のAgent Exam |
+| [`agentic-kaggle-skill`](.agents/skills/agentic-kaggle-skill/SKILL.md) | 191 | CV、ベースライン、OOF、モデル比較、アンサンブル |
+| [`kaggle-badges`](.agents/skills/kaggle-badges/SKILL.md) | 108 | バッジの取得条件と確認方法 |
+
+CLI操作は公式の `kaggle-cli` に集約しています。テンプレート固有の初期準備は `kaggle-fetch-competition`、MCP経由での入力配置は `import-kaggle-resource`、参加中コンペの投稿やNotebookの系譜の調査は既存の調査Skillを使います。
+
 Kaggle MCPを使う場合は、`KAGGLE_API_TOKEN` を環境変数として設定してください。詳細は `docs/agent-integrations.md` を参照してください。
 
 ## Docker による環境構築
