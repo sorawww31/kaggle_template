@@ -127,17 +127,11 @@ Codex, Cursor, Claude Code, GitHub Copilot, Gemini CLI 向けの指示・skill�
 
 ### Skillsの管理
 
-Skillはすべて `.agents/skills/` を正として管理します。ClaudeやCodexなど各エージェント側のSkillディレクトリは直接編集しません。Skillを追加・更新・削除した後は、`.agents/sync_skills.sh` を実行して各エージェントへ反映します。
+Skillはすべて `.agents/skills/` に集約して管理します。追加・更新・削除はこのディレクトリで行います。
 
 ```sh
-# skillを追加する場合
 .agents/skills/<skill-name>/SKILL.md
-
-# Claude、Codex、Gemini、Cursorへ反映
-bash .agents/sync_skills.sh
 ```
-
-`.claude/skills/`、`.codex/skills/`、`.gemini/skills/`、`.cursor/skills/` は同期生成物です。Skillの管理は必ず `.agents/skills/` で行ってください。
 
 ### Kaggle向け公開Skill
 

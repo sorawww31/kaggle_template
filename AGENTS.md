@@ -54,7 +54,7 @@ Motto: "Small, clear, safe steps in Japanese - always grounded in real docs."
 - Shared instructions source: `AGENTS.md`
 - Shared skill source: `.agents/skills/*/SKILL.md`
 - Shared command source: `.agents/commands/*.md`
-- Generated skill copies are refreshed by `bash .agents/sync_skills.sh`.
+- Manage skills directly in `.agents/skills/`.
 
 ## Kaggle Competition Onboarding## This Repository's Agents
 このリポジトリはML実験用のリポジトリのため、各コードには、シンプルさを何より優先せよ。冗長な表現とうは必要ない

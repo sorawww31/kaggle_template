@@ -7,34 +7,13 @@ Why: Help contributors keep Codex, Cursor, Claude Code, GitHub Copilot, and Gemi
 
 # AI Agent Integrations
 
-このリポジトリでは、AIエージェント向けの指示・skill・commandを共通ソースから生成します。
+このリポジトリでは、AIエージェント向けの指示・skill・commandを共通ソースで管理します。
 
 ## 共通ソース
 
 - `AGENTS.md`: 全エージェントの共通作業方針。
 - `.agents/skills/*/SKILL.md`: 共通 Agent Skills。
 - `.agents/commands/*.md`: 共通 command prompt。
-- `tools/sync_agent_assets.py`: 各ツールのネイティブ配置へ同期するスクリプト。
-
-同期:
-
-```sh
-uv run python tools/sync_agent_assets.py
-```
-
-通常同期は必要な生成物を作成・更新します。`.agents/` から削除したskillやcommandに対応する生成物も削除したい場合は、厳密同期します。
-
-```sh
-uv run python tools/sync_agent_assets.py --prune
-```
-
-検証:
-
-```sh
-uv run python tools/sync_agent_assets.py --check
-uv run python tools/sync_agent_assets.py --check --prune
-uv run pytest tests/test_agent_assets.py
-```
 
 ## MCP設定
 
@@ -52,9 +31,9 @@ GitHub Copilot CLIのユーザー単位MCPは `~/.copilot/mcp-config.json` で�
 
 ## Commands
 
-共通commandは `.agents/commands/*.md` に書きます。同期すると次に展開されます。
+共通commandは `.agents/commands/*.md` に書きます。ツール固有のcommandを配置する場合は次のパスを使います。
 
-| Tool | Generated path |
+| Tool | Native path |
 | --- | --- |
 | Claude Code | `.claude/commands/*.md` |
 | Cursor | `.cursor/commands/*.md` |
@@ -65,4 +44,4 @@ Codex CLIについては、公式ドキュメント上でプロジェクトロ�
 
 ## Skills
 
-共通skillは `.agents/skills` を正とします。Codex/Cursor/GitHub Copilot/Geminiはこの共有ディレクトリを使い、Claude Code向けには `.claude/skills` に同期します。
+共通skillは `.agents/skills/*/SKILL.md` に集約します。Skillの追加・更新・削除はこのディレクトリで行います。
