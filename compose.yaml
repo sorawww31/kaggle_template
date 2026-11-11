@@ -1,18 +1,19 @@
 services:
   kaggle:
     build: .
+    image: kaggle-env:latest
     env_file:
       - .env  # .envファイルを読み込む
     volumes:
       - $PWD/.jupyter:/root/.jupyter # jupyterの設定
       - $PWD/input:/kaggle/input
       - $PWD/.cache:/root/.cache
-      - $PWD:/kaggle/working
+      - $PWD:/kaggle/
       - ~/.kaggle:/root/.kaggle
     environment:
-      - JUPYTERLAB_SETTINGS_DIR=/kaggle/working/.jupyter-settings # jupyterの設定(保存用)
-      - NETRC=/kaggle/working/.netrc # wandb key の保存先
-    working_dir: /kaggle/working
+      - JUPYTERLAB_SETTINGS_DIR=/kaggle/.jupyter-settings # jupyterの設定(保存用)
+      - NETRC=/kaggle/.netrc # wandb key の保存先
+    working_dir: /kaggle
     ports:
       - 8889:8889
     command: jupyter lab --allow-root --ip=0.0.0.0 --port=8889 --no-browser --NotebookApp.token=''

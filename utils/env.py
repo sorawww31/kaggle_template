@@ -9,7 +9,7 @@ def _project_root() -> Path:
 @dataclass
 class EnvConfig:
     input_dir: str | Path = field(default_factory=lambda: str(_project_root() / "input"))
-    output_dir: str | Path = field(default_factory=lambda: str(_project_root() / "outputs"))
+    output_dir: str | Path = field(default_factory=lambda: str(_project_root() / "working"))
 
     # コード内で書き換わります
-    exp_output_dir: str | Path = field(default_factory=lambda: str(_project_root() / "outputs"))
+    exp_output_dir: str | Path = field(default_factory=lambda: str(_project_root() / "working"))
