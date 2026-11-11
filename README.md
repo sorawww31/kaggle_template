@@ -38,7 +38,7 @@ $kaggle-fetch-competition を使ってCOMPETITIONのコンペをオンボーデ�
 
 ### 3. 手動でデータを取り込む
 
-AIやKaggle MCPを使わず、Competitionデータを直接取得する場合は次を実行する。
+AIを使わず、Competitionデータを直接取得する場合は次を実行する。
 
 ```sh
 uv run python tools/download_dataset.py competition "$COMPETITION"
@@ -135,7 +135,7 @@ Skillはすべて `.agents/skills/` に集約して管理します。追加・�
 
 ### Kaggle向け公開Skill
 
-公開Skillの手順をこのテンプレートに合わせて採用しています。各Skillに参照元のコミットを記載しています。スター数は配布元リポジトリの2026年11月7日時点の表示です。
+公開Skillと公式CLIドキュメントの本文を `.agents/skills/` に取り込んでいます。必要な手順・参照本文・ライセンスをローカルに保存し、出典と固定コミットは各 `references/SOURCES.md` に記録しています。スター数は配布元リポジトリの2026年11月7日時点の表示です。
 
 | Skill | 上流スター | 担当 |
 |---|---:|---|
@@ -143,11 +143,13 @@ Skillはすべて `.agents/skills/` に集約して管理します。追加・�
 | [`kaggle-learner`](.agents/skills/kaggle-learner/SKILL.md) | 約6,000 | 過去コンペの上位解法から学ぶ |
 | [`create-harness`](.agents/skills/create-harness/SKILL.md)、[`onboard-open-spiel-game`](.agents/skills/onboard-open-spiel-game/SKILL.md) | 459 | 対戦するLLMの実装、OpenSpielゲームの追加 |
 | [`nvidia-kaggle-skill`](.agents/skills/nvidia-kaggle-skill/SKILL.md) | 349 | 指定Notebookの入力と実行環境をローカルで再現 |
-| [`kaggle-benchmarks`](.agents/skills/kaggle-benchmarks/SKILL.md)、[`kaggle-standardized-agent-exam`](.agents/skills/kaggle-standardized-agent-exam/SKILL.md) | 204 | LLM評価タスクの作成、Kaggle公式のAgent Exam |
+| [`kaggle-benchmarks`](.agents/skills/kaggle-benchmarks/SKILL.md) | 204 | LLM評価タスクの作成・実行 |
 | [`agentic-kaggle-skill`](.agents/skills/agentic-kaggle-skill/SKILL.md) | 191 | CV、ベースライン、OOF、モデル比較、アンサンブル |
 | [`kaggle-badges`](.agents/skills/kaggle-badges/SKILL.md) | 108 | バッジの取得条件と確認方法 |
 
-CLI操作は公式の `kaggle-cli` に集約しています。テンプレート固有の初期準備は `kaggle-fetch-competition`、MCP経由での入力配置は `import-kaggle-resource`、参加中コンペの投稿やNotebookの系譜の調査は既存の調査Skillを使います。
+CLI操作は公式の `kaggle-cli` に集約しています。テンプレート固有の初期準備は `kaggle-fetch-competition`、CLIでの入力配置は `import-kaggle-resource`、参加中コンペの投稿やNotebookの系譜の調査は既存の調査Skillを使います。
+
+Kaggleへの操作は公式CLIに統一しています。Docker Composeが使える場合は `docker compose run --rm kaggle kaggle ...` を優先し、使えない場合だけuvを使います。CLIに対応しないStandardized Agent ExamのHTTP専用スキルは含めません。
 
 Kaggle CLIの認証には、環境変数 `KAGGLE_API_TOKEN` を使います。エージェント連携の詳細は `docs/agent-integrations.md` を参照してください。
 

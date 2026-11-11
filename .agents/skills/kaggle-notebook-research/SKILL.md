@@ -1,7 +1,9 @@
 ---
 name: kaggle-notebook-research
-description: Kaggle MCPで公開Notebook/Kernelを検索し、fork親子関係、重複、派生、public score、利用データ・モデル・出力物、コード本文を根拠付きで調査してMarkdownにまとめる。ユーザーが「公開ノートブックを調査」「似たNotebookの違いを見たい」「BirdCLEFなど参加中コンペのnotebookから実装ヒントを拾って」「高スコアNotebookの派生元を追って」「Kaggle Notebookの重複・fork・改善点を整理して」などを依頼したときに使う。
+description: Kaggle公式CLIで公開Notebook/Kernelを検索し、fork親子関係、重複、派生、public score、利用データ・モデル・出力物、コード本文を根拠付きで調査してMarkdownにまとめる。ユーザーが「公開ノートブックを調査」「似たNotebookの違いを見たい」「BirdCLEFなど参加中コンペのnotebookから実装ヒントを拾って」「高スコアNotebookの派生元を追って」「Kaggle Notebookの重複・fork・改善点を整理して」などを依頼したときに使う。
 ---
+
+Kaggleへのアクセスは `$kaggle-cli` の実行方法に従う。Docker Composeが使える場合は `docker compose run --rm kaggle kaggle ...` を優先し、本文中の `kaggle ...` / `uv run kaggle ...` も同じ引数で置き換える。Dockerが使えない場合だけuvへフォールバックする。
 
 <!--
 SKILL.md
@@ -12,70 +14,33 @@ Why: Turn noisy public notebook streams into actionable, source-grounded experim
 
 # Kaggle Notebook Research
 
-このSkillは、Kaggle MCPで公開Notebookを広く集め、単なるvote順ではなく、fork系譜・重複・小改変・実装上の差分まで見て、実験に使える知見を`docs/notebooks/*.md`へ残すための手順を定める。
+このSkillは、Kaggle公式CLIで公開Notebookを広く集め、単なるvote順ではなく、fork系譜・重複・小改変・実装上の差分まで見て、実験に使える知見を`docs/notebooks/*.md`へ残すための手順を定める。
 
 Notebook調査は同名fork、丸写し、小さな後処理追加、古い高vote、低voteだが新しい高scoreが混ざる。候補収集、系譜整理、本文確認、要約を分けて進める。
 
-詳細なMCPツール使い分けは、必要に応じて`references/kaggle_mcp_notebook_tools.md`を読む。
+操作前に `$kaggle-cli` と `references/kaggle_cli_notebook_tools.md` のローカル本文を読む。以下の `kaggle` は認証済みの `uv run kaggle` として実行する。
 
-## 前提確認
+## 前提と候補収集
 
-1. 対象コンペを決める。
-   - ユーザーがslugを明示したら優先する。例: `birdclef-2026`。
-   - 「参加中コンペ」ならREADME、config、実験ディレクトリ名、Kaggle MCPのcompetition検索から候補を確認する。
-2. Kaggle MCPツールが未ロードなら、tool discoveryで`search_notebooks`、`search_content`、`get_notebook_info`、`list_notebook_files`、`list_notebook_session_output`、`download_notebook_output`を探す。
-3. `context()` MCPが使える環境ならKaggle APIや利用ライブラリの公式挙動確認に使う。使えない場合は「context MCPは利用不可」と明示し、Kaggle MCPの結果を根拠にする。
-4. 出力先は通常`docs/notebooks/`とする。`kaggle-fetch-competition`から呼ばれた場合は`docs/competitions/<slug>/notebooks.md`を使う。既存ファイルを更新する場合は先に全文を読み、ユーザーの追記を戻さない。
+ユーザーの明示slugを優先し、なければ `COMPETITION` と参加済みコンペ一覧で確認する。通常は `docs/notebooks/`、オンボーディングでは `docs/competitions/<slug>/notebooks.md` に保存する。既存文書を先に全文読む。
 
-## 候補を広く集める
-
-### 1. 軽量一覧を複数軸で取る
-
-`search_notebooks`を使い、同じコンペで複数sortと検索語を巡回する。
-
-```text
-search_notebooks(competition="<competition-slug>", group="Everyone", pageSize=20, page=1, sortBy="VoteCount")
-search_notebooks(competition="<competition-slug>", group="Everyone", pageSize=20, page=1, sortBy="Hotness")
-search_notebooks(competition="<competition-slug>", group="Everyone", pageSize=20, page=1, sortBy="DateRun")
-search_notebooks(competition="<competition-slug>", group="Everyone", pageSize=20, page=1, sortBy="CommentCount")
+```bash
+kaggle kernels list --competition <slug> --sort-by voteCount -p 1 -v
+kaggle kernels list --competition <slug> --sort-by hotness -p 1 -v
+kaggle kernels list --competition <slug> --sort-by dateRun -p 1 -v
+kaggle kernels list --competition <slug> --sort-by commentCount -p 1 -v
+kaggle kernels list --competition <slug> --search "<keyword>" --sort-by relevance -p 1 -v
+kaggle kernels list --parent <owner/parent> -p 1 -v
 ```
 
-検索語で補完する。
+後続ページを巡回し、refで重複を除く。検索語はbaseline/training/inference/ensemble/OOF/postprocess/ONNXと分野固有語で補う。候補表にはref、title、取得できたauthor、votes、更新日、発見元を残す。score順は指標の最適化方向を確認して使い、並び順から数値を逆算しない。
 
-- 汎用語: `baseline`、`starter`、`training`、`inference`、`submission`、`ensemble`、`pseudo`、`CV`、`OOF`、`postprocess`、`ONNX`。
-- 音声: `perch`、`SED`、`mel`、`soundscape`、`window`、`TTA`、`threshold`。
-- 画像: `backbone`、`augmentation`、`resolution`、`segmentation`、`TTA`。
-- 表形式: `feature`、`target encoding`、`group split`、`leak`、`catboost`、`lightgbm`。
-- NLP: `tokenizer`、`retrieval`、`embedding`、`prompt`、`sequence length`。
-
-### 2. 詳細メタデータを取る
-
-`search_content`を使うと、`search_notebooks`よりも派生調査に必要な情報が多い。Kernelだけに絞り、vote順・更新日順・検索語で集める。
-
-```text
-search_content(
-  filters={
-    query="<competition-slug> <keyword>",
-    documentTypes=["Kernel"],
-    privacy="Public"
-  },
-  canonicalOrderBy="Votes",
-  pageSize=20
-)
-```
-
-候補表には少なくとも次を残す。
-
-- `id`、`title`、`owner_user.user_name`、`owner_user.tier`、URL。
-- `create_time`、`update_time`、votes、medal、`total_comments`。
-- `kernel_document.best_public_score`。
-- `kernel_document.fork_parent_kernel_url`と`fork_parent_user`。
-- 発見元: `VoteCount`、`Hotness`、`DateRun`、`keyword: perch`など。
+CLIに表示されないtier、medal、親URL、public scoreは未確認とする。既知の親の `--parent` 検索で子を確認できた場合だけ親子関係を確定する。本文のリンク・引用からの系譜と、コード類似による推定を区別する。
 
 ## 系譜と重複を整理する
 
 1. 同じNotebookファミリーをまとめる。
-   - `fork_parent_kernel_url`があるものは親URLでつなぐ。
+   - CLIで確認した親URLがあるものは親URLでつなぐ。
    - 同名title、slugの共通prefix、同じデータソース、同じモデル名、同じscore表記を補助特徴にする。
    - 親が取れないNotebookは、同名でも別実装の可能性を残す。
 2. 候補を分類する。
@@ -92,28 +57,18 @@ search_content(
 
 ## Notebook本文を読む
 
-`get_notebook_info`は本文全体を返し、非常に大きくなることがある。全候補に呼ばず、各ファミリーから代表を選ぶ。
+全候補を取得せず、起点、高scoreを主張する派生、新手法、コメントの多いもの、自分の実験に近いものを代表に選ぶ。
 
-読む代表:
+```bash
+kaggle kernels pull <owner/notebook/version> -m -p <tmp>
+kaggle kernels files <owner/notebook/version> -v
+kaggle kernels output <owner/notebook/version> -p <tmp> --file-pattern "<必要ファイルの正規表現>"
+kaggle kernels topics list <owner/notebook> --sort-by top -v
+```
 
-- rootまたは最古の高品質Notebook。
-- best public scoreが高い派生。
-- titleやmetadataで明確な新機能を主張する派生。
-- コメント数が多いNotebook。
-- 自分の実験に近いNotebook。
+`kernel-metadata.json` の `code_file`、`competition_sources`、`dataset_sources`、`kernel_sources`、`model_sources`、GPU/internet設定を読む。本文はセルに分け、見出し、設定、主要関数、保存処理、親との差分を確認する。version未指定の最新版を固定version扱いにしない。
 
-確認する項目:
-
-1. `metadata`
-   - `current_version_number`、`last_run_time`、`enable_gpu`、`enable_internet`、`machine_shape`、`docker_image`。
-   - `competition_data_sources`、`dataset_data_sources`、`kernel_data_sources`、`model_data_sources`。
-2. `blob.source`
-   - JSONとして読める場合はNotebookセルに分解して、markdown見出し、設定値、関数名、出力保存、提出処理を見る。
-   - すべてを要約しない。差分判定に効くセルだけを読む。
-3. 出力物
-   - `list_notebook_files`でモデル、npz、json、submissionなどを確認する。
-   - `list_notebook_session_output`でセッション出力が必要か確認する。
-   - `download_notebook_output`は必要な小さいファイルに限定する。提出CSVや巨大モデルを無目的に落とさない。
+ファイル一覧は全ページを確認し、必要な小さい出力だけ取得する。コードやインストールセルは取得しただけで実行しない。実行履歴やスコアなどCLIで確認できない情報は未確認とする。
 
 ## 実装差分を抽出する
 
@@ -126,7 +81,7 @@ Notebookファミリーごとに、親から何が変わったかを要約する
 - 検証: CV、OOF、public score、LB依存、hidden testで壊れそうな仮定。
 - 再利用性: 自分のrepoに移植しやすいか、依存や実行時間が重いか、ルール確認が必要か。
 
-「scoreが上がった」と書く場合は、Kaggle MCPで確認できた`best_public_score`またはNotebook内の明記を出典付きで残す。推測なら推測と書く。
+「scoreが上がった」と書く場合は、Kaggle公式CLIで確認できたpublic scoreまたはNotebook内の明記を出典付きで残す。推測なら推測と書く。
 
 ## Markdownへ保存する
 
@@ -153,7 +108,7 @@ Why: Preserve actionable implementation ideas with fork, duplicate, and source c
 - 対象: <competition title> (`<slug>`)
 - 依頼: <user request>
 - 調査範囲: <sort/search terms/pages/families/read notebooks>
-- 注意: <MCP制約、未取得本文、推測の有無>
+- 注意: <CLIの出力制約、未取得本文、推測の有無>
 
 ## 結論
 - <実装判断に直結する要点>
@@ -182,7 +137,7 @@ Why: Preserve actionable implementation ideas with fork, duplicate, and source c
 - <repoへ移すなら何をどこに入れるか>
 
 ## 未確認・リスク
-- <読めていない候補、MCP制約、推測>
+- <読めていない候補、CLIの出力制約、推測>
 
 ## Source Index
 | 種別 | id/ref | title | URL | メモ |

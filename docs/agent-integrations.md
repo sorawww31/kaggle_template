@@ -19,8 +19,8 @@ Why: Help contributors keep Codex, Cursor, Claude Code, GitHub Copilot, and Gemi
 
 `KAGGLE_API_TOKEN` を環境変数として設定してください。トークン値は設定ファイルに直接書かないでください。
 
-Kaggle操作はCLIを使い、このリポジトリにはKaggle MCPの接続設定を配置しません。
-一部の既存skillにはMCPを前提とした手順が残っているため、CLIへの手順移行が必要です。
+Kaggle操作はDocker Composeが使える場合に `docker compose run --rm kaggle kaggle ...` を優先し、使えない場合はuvでCLIを実行します。このリポジトリにはKaggle MCPの接続設定を配置しません。
+Kaggle系skillは公式CLIで操作します。公式スキル・コマンド仕様・解法知識は `.agents/skills/` 内の本文として保持し、出典URLだけの参照にはしません。Notionへの記録はNotion接続を使います。
 
 ## Commands
 

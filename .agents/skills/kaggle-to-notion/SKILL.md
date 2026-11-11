@@ -1,7 +1,9 @@
 ---
 name: kaggle-to-notion
-description: 指定された experiments/expXXX_* ディレクトリの Kaggle サブミッション結果を MCP 経由で取得し、コード、config、README のベース実験との差分を含む実験サマリを Notion 実験管理 DB に記録する。ユーザーが「Notion に実験まとめて」「Kaggle の結果を Notion に送って」「expXXX のスコアを Notion に記録」「サブミット結果を同期」などを依頼したとき、または Kaggle/BirdCLEF 実験を「ベース exp との差分 + サブミットスコア」で 1 ページに残したいときに使う。
+description: 指定された experiments/expXXX_* ディレクトリの Kaggle サブミッション結果を公式CLIで取得し、コード、config、README のベース実験との差分を含む実験サマリを Notion 実験管理 DB に記録する。ユーザーが「Notion に実験まとめて」「Kaggle の結果を Notion に送って」「expXXX のスコアを Notion に記録」「サブミット結果を同期」などを依頼したとき、または Kaggle/BirdCLEF 実験を「ベース exp との差分 + サブミットスコア」で 1 ページに残したいときに使う。
 ---
+
+Kaggleへのアクセスは `$kaggle-cli` の実行方法に従う。Docker Composeが使える場合は `docker compose run --rm kaggle kaggle ...` を優先し、本文中の `kaggle ...` / `uv run kaggle ...` も同じ引数で置き換える。Dockerが使えない場合だけuvへフォールバックする。
 
 # Kaggle to Notion
 
@@ -16,7 +18,7 @@ description: 指定された experiments/expXXX_* ディレクトリの Kaggle �
 |---|---|
 | 1. 実験ディレクトリを読む | 通常通り実行 |
 | 2. ベースとの差分を要約する | 通常通り実行 |
-| 3. Kaggle サブミッションを取得する | 通常通り実行（MCP 呼び出しあり） |
+| 3. Kaggle サブミッションを取得する | 通常通り実行（Kaggle CLI） |
 | 4. Notion 書き込み先を解決する | 検索・fetch は行う。既存ページ検出時は確認 prompt を出さず、payload に上書き候補フラグだけ立てる |
 | 5. ページ本文を作る | 通常通り実行 |
 | 6. Notion に書き込む | **スキップ**。予定プロパティと本文を会話に出して終了 |
@@ -25,11 +27,11 @@ description: 指定された experiments/expXXX_* ディレクトリの Kaggle �
 
 開始時に次を確認する。
 
-- Kaggle MCP が使えること。未認可なら authorize 手順を案内して停止する。
+- `$kaggle-cli` のローカル本文に従い、`.env` の認証をロードしてCLIが使えること。提出取得前に `../kaggle-cli/references/competitions.md` を読む。
 - Notion MCP が使えること。検索や作成が未認可ならセットアップを案内して停止する。
 - `experiments/` 配下に `expXXX_*` 形式の実験ディレクトリがあること。
 
-MCP ツール名が環境で固定されていない場合は、利用可能な Kaggle/Notion ツールを検索してから使う。元コマンド環境では Kaggle は `kaggle-wsl`、Notion は `claude_ai_Notion` を想定している。
+Notionの検索・書き込みは利用可能なNotion接続ツールを使う。Kaggleの取得は公式CLIだけを使う。
 
 ## 引数
 
@@ -66,14 +68,14 @@ MCP ツール名が環境で固定されていない場合は、利用可能な 
 
 ### 3. Kaggle サブミッションを取得し yaml と紐付ける
 
-1. コンペ slug が不明なら README/config から推定し、必要なら Kaggle MCP で `birdclef` を検索する。BirdCLEF 固定にしない。
-2. 自分の competition submissions を取得する。
+1. 明示slug、ロード済み `COMPETITION`、README/configから対象を確認し、必要なら `uv run kaggle competitions list -s <検索語> -v` で解決する。BirdCLEF固定にしない。
+2. `uv run kaggle competitions submissions <slug> --page-size 200 -v` を実行し、返された `--page-token` で全ページを取得する。2.2.2では次ページtokenが表示されないため、200件に達したら全履歴を取得できたとせず取得範囲を明記する。CSVとして読み、実際の列名に合わせる。notebook名・version・private scoreが表示されなければ未確認とし、descriptionとローカルの実行記録から対応を補う。確定できない提出を除外して0件扱いにしない。
 3. `exp_tag` に一致する提出を次の優先順位でフィルタする。
    - 優先 1: notebook slug (URL) に `exp_tag` を含む（例: `clef-exp026-*`）
    - 優先 2: notebook title に `exp_tag` を含む
    - 優先 3: description に `exp_tag` を含む
    - 複数階層にヒットした場合は全て採用し、提出日時順に並べる。
-   - 0 件ならエラーにしない。ローカル差分と README は続行して本文を組み立てる。「サブミッション未検出。ローカル情報のみで Notion に下書きを作りますか？」と確認し、yes なら `サブミッション結果` は `なし` の 1 行にし、`最高 public/private score` は `N/A` として 5 → 6 に進む。no ならここで停止する。
+   - `--dry-run` で0件なら確認を求めずローカル情報のみの本文を作る。scoreは `N/A` とし、送信しない。通常実行で0 件ならエラーにしない。ローカル差分と README は続行して本文を組み立てる。「サブミッション未検出。ローカル情報のみで Notion に下書きを作りますか？」と確認し、yes なら `サブミッション結果` は `なし` の 1 行にし、`最高 public/private score` は `N/A` として 5 → 6 に進む。no ならここで停止する。
 4. 各提出から `submitted_at`、public/private score、status、description、notebook 名と version を抽出する。
    - 本文テーブルの `提出日時 (JST)` 列: JST 文字列 (`YYYY-MM-DD HH:MM JST`)
    - DB の date プロパティ: ISO-8601 (UTC オフセット付き、例: `2026-04-25T14:35:33+00:00`)
@@ -85,7 +87,7 @@ MCP ツール名が環境で固定されていない場合は、利用可能な 
 
 ### 4. Notion 書き込み先を解決する
 
-  - `notion_url_or_id` がある場合は fetch して DB かページかを判定する。DB なら 6. に従ってページを作成・更新する。ページなら既定はその配下に子ページを 1 つ作る。本文への直接追記はしない。子ページ作成ができない、または同名子ページが既にある場合は確認する。
+  - `notion_url_or_id` がある場合は fetch して DB かページかを判定する。DB なら 6. に従ってページを作成・更新する。ページなら既定はその配下に子ページを 1 つ作る。本文への直接追記はしない。通常実行で子ページ作成ができない、または同名子ページが既にある場合は確認する。`--dry-run` は確認を求めず未解決事項・上書き候補を予定本文に添える。
   - 未指定なら Notion を「実験」「experiment」「BirdCLEF」「Kaggle」などで検索し、DB 候補を優先して提示する。
   - DB の場合は fetch でプロパティスキーマを読み、型に合うプロパティだけ設定する。`experiment_dir` / score / date / `base_dir` は exact-match を優先し、同型候補が複数あるときは自動選択せず停止する。
   - 同じ `experiment_dir` タイトルの既存ページがある場合: 衝突判定は `notion_url_or_id` で解決した target 配下に限定する。workspace 全体の別ページは衝突扱いにしない。`--dry-run` のときは確認 prompt を出さず payload に上書き候補フラグを立てる。通常実行時は target 配下に同名ページがあるときだけ、既存ページを更新する / 別ページを作る / 中止のどれにするか確認する。

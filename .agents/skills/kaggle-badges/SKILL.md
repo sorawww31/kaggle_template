@@ -1,14 +1,15 @@
 ---
 name: kaggle-badges
-description: Kaggleのプロフィールバッジについて、取得条件、必要な操作、取得状況の確認方法を案内する。バッジを明示的に指定されたときに使う。
+description: Kaggleバッジの条件本文を確認し、CLIで行える操作と手動操作を分けて案内する。バッジを指定されたときに使う。
 ---
+
+Kaggleへのアクセスは `$kaggle-cli` の実行方法に従う。Docker Composeが使える場合は `docker compose run --rm kaggle kaggle ...` を優先し、本文中の `kaggle ...` / `uv run kaggle ...` も同じ引数で置き換える。Dockerが使えない場合だけuvへフォールバックする。
+
+<!-- 配置: .agents/skills/kaggle-badges。内容: 実行手順。目的: ローカル本文で再現する。 -->
 
 # Kaggle Badges
 
-<!-- Where: .agents/skills/kaggle-badges. What: バッジ条件の案内。 Why: アカウント変更の前に必要な操作を把握する。 -->
-
-1. バッジ名またはカテゴリを確認し、上流カタログから取得条件と手動操作の有無を調べる。
-2. 操作手順と、提出枠・Notebook実行枠を使うかを示す。CLI操作の詳細は `$kaggle-cli` を参照する。
-3. 取得済みかはKaggleプロフィールで確認する。操作が完了しただけの場合は、その状態を報告する。
-
-[上流のバッジカタログ](https://github.com/shepsci/kaggle-skill/blob/a47bff9830af088bfce3bf974343916370137d1f/skills/kaggle/modules/badges/references/badge-catalog.md)
+1. `references/badge-catalog.md` の該当バッジ条件と注意事項を読む。名称とカテゴリを確認する。
+2. `$kaggle-cli` の本文で対応コマンドを確認し、必要なNotebook実行、提出、Dataset作成などの操作を具体化する。バッジ取得のためだけに公開・提出・枠消費を勝手に追加しない。
+3. プロフィール編集、投票、フォロー、取得済みバッジ確認などCLIで扱えない操作は手動手順として案内する。直接APIやブラウザ自動操作に置き換えない。
+4. CLI操作の成功とバッジ付与は区別する。付与を確認できなければ未確認と報告する。

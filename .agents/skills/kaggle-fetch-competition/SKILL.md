@@ -3,6 +3,8 @@ name: kaggle-fetch-competition
 description: 環境変数COMPETITIONのKaggleコンペを開始するため、参加・データ取得、公式ページと厳密なルールの文書化、Discussionと公開Notebookの動向調査、最高voteのEDA Notebook導入とMarkdownセルの日本語化を統括する。ユーザーが「コンペをオンボーディング」「新しいKaggleコンペを開始」「コンペ情報・ルール・流行手法をまとめて」「EDAまで用意」などを依頼したときに使う。
 ---
 
+Kaggleへのアクセスは `$kaggle-cli` の実行方法に従う。Docker Composeが使える場合は `docker compose run --rm kaggle kaggle ...` を優先し、本文中の `kaggle ...` / `uv run kaggle ...` も同じ引数で置き換える。Dockerが使えない場合だけuvへフォールバックする。
+
 <!--
 SKILL.md
 Where: .agents/skills/kaggle-fetch-competition.
@@ -55,25 +57,25 @@ notebook/EDA/
 
 ## 1. 対象を確定する
 
-1. プロセス環境の`COMPETITION`を読む。空なら停止し、設定を依頼する。
+1. `.env` をロードし、明示slugがなければ `COMPETITION` を読む。どちらも空なら設定を依頼する。
 2. `.env.example`や類似slugから推測しない。ユーザーが明示的に別slugを指定した場合だけ優先する。
-3. Kaggle MCPの`get_competition`でslug、title、URL、deadline、entrant deadline、team count、team rank、参加状態を確認する。
-4. MCP結果のslugが`COMPETITION`と一致しなければ停止する。
+3. `$kaggle-cli` の認証とローカル参照本文を読む。`uv run kaggle competitions list -s <slug> -v` と `competitions list --group entered -v` の全ページでslug完全一致、期限、参加状態など取得できる情報を確認する。表示されない項目は公式ページ本文で補い、未確認は残す。
+4. 取得したslugが選択した対象と一致しなければ停止する。明示slugはimportにも同じ値を渡す。
 5. 既存の`docs/competitions/<slug>/`、`notebook/EDA/`、README、AGENTS.mdの差分を読み、ユーザーの追記を戻さない。
 
 ## 2. 参加とデータを準備する
 
 1. `$import-kaggle-resource`を使う。
-2. `user_has_entered == true`を確認する。未参加でMCPから規約同意できない場合は、Kaggle上での手動同意を依頼する。
+2. 参加済み一覧で対象を確認する。規約同意が必要ならKaggle上での手動同意を案内する。
 3. Competitionデータを`input/competitions/<slug>/`へ取得する。
-4. MCPの総ファイル数とローカル件数を比較し、一致しなければ後続調査を成功扱いにしない。
+4. CLIの全ページのファイル一覧とローカルの相対パス・件数を比較し、不一致なら全体を成功扱いにしない。
 
 ## 3. 公式情報を収集する
 
-Kaggle MCPの公式Competition情報を一次根拠として取得する。
+`../kaggle-cli/references/competitions.md` のローカル本文に従って公式情報を取得する。以下は認証済みの `uv run kaggle` で実行する。
 
-1. `get_competition`で基本情報、期限、賞金、team/submission制約、Notebook提出要否を取得する。
-2. `list_competition_pages`で少なくとも次を確認する。
+1. `competitions list -s <slug> -v` と公式ページ本文で基本情報、期限、賞金、team/submission制約、Notebook提出要否を確認する。
+2. `competitions pages <slug>` でページ名を取得し、返された名前を使って `competitions pages <slug> --content --page-name "<name>"` を実行する。少なくとも次を確認する。
    - Overview / Description
    - Data Description
    - Evaluation
@@ -82,7 +84,7 @@ Kaggle MCPの公式Competition情報を一次根拠として取得する。
    - Prizes
    - Code Requirements
    - Acknowledgements / Licenses
-3. `get_competition_data_files_summary`と`list_competition_data_files`を全ページ確認する。
+3. `competitions files <slug> -v` を継続tokenがなくなるまで確認する。schemaや欠損はデータ取得後にローカルで調べる。
 4. 公式本文にない事項を一般的なKaggle慣行から補完しない。
 5. 公式ページ同士に矛盾があれば、Rulesと更新日の新しいhost告知を優先し、矛盾自体を記録する。
 
@@ -144,13 +146,13 @@ Rules本文を要約し、項目ごとに根拠ページ・節・確認日を付
 
 ## 7. 最高voteのEDAを導入する
 
-1. 対象コンペで`search_notebooks`を`VoteCount`順に検索し、`EDA`、`data exploration`、`visualization`、`starter`でも補完する。
-2. `search_content`でも公開Kernelを集め、competition ID/slugの一致、privacy、votes、更新日、fork親を確認する。
-3. 上位候補の`get_notebook_info`本文を読み、主目的がEDAであることを確認する。titleだけでEDA判定しない。
+1. `kernels list --competition <slug> --sort-by voteCount -v` の後続ページを辿り、`--search` でEDA/data exploration/visualization/starterを補完する。
+2. `kernels pull <owner/slug/version> -m -p <tmp>` で候補本文と入力情報を取得する。取得できないprivacy、version、fork親は未確認とする。
+3. pullした本文を読み、主目的がEDAであることを確認する。titleだけでEDA判定しない。
 4. 条件を満たす公開EDAの中で最大votesの1件を選ぶ。取得日、votes、候補範囲、選定理由を`notebooks.md`へ残す。
    - 有効なEDA候補が0件なら非EDAで代用せず、その事実と検索範囲を記録して導入を停止する。
 5. author、URL、version、licenseを確認する。派生物の再配布条件が不明または禁止なら、書き込み前にユーザーへ確認する。
-6. `get_notebook_info`の`blob.source`を一時保存し、`notebook/EDA/<owner>__<slug>.ipynb`へ配置する。
+6. pullしたmetadataの `code_file` を確認し、Notebookソースを `notebook/EDA/<owner>__<slug>.ipynb` へ配置する。
 7. Markdownセルの自然言語だけを日本語へ翻訳する。
    - codeセルの`source`、comments、文字列、magic、outputs、execution countを変更しない。
    - 数式、URL、引用元、filename、column名、API名、model名を維持する。
