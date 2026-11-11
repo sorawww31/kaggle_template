@@ -119,7 +119,7 @@ cp .env.example .env
 
 ## AIエージェント設定
 
-Codex, Cursor, Claude Code, GitHub Copilot, Gemini CLI 向けの指示・skill・command・MCP設定を用意しています。
+Codex, Cursor, Claude Code, GitHub Copilot, Gemini CLI 向けの指示・skill・commandを用意しています。
 
 - 共通指示: `AGENTS.md`
 - 共通skill: `.agents/skills/*/SKILL.md`
@@ -149,7 +149,7 @@ Skillはすべて `.agents/skills/` に集約して管理します。追加・�
 
 CLI操作は公式の `kaggle-cli` に集約しています。テンプレート固有の初期準備は `kaggle-fetch-competition`、MCP経由での入力配置は `import-kaggle-resource`、参加中コンペの投稿やNotebookの系譜の調査は既存の調査Skillを使います。
 
-Kaggle MCPを使う場合は、`KAGGLE_API_TOKEN` を環境変数として設定してください。詳細は `docs/agent-integrations.md` を参照してください。
+Kaggle CLIの認証には、環境変数 `KAGGLE_API_TOKEN` を使います。エージェント連携の詳細は `docs/agent-integrations.md` を参照してください。
 
 ## Docker による環境構築
 Dockerが利用できない方は、同md下部のuvによる環境設定を参照してください。

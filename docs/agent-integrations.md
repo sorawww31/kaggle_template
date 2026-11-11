@@ -1,7 +1,7 @@
 <!--
 docs/agent-integrations.md
 Where: project documentation.
-What: Explains shared AI-agent instructions, skills, commands, and MCP settings.
+What: Explains shared AI-agent instructions, skills, commands, and Kaggle authentication.
 Why: Help contributors keep Codex, Cursor, Claude Code, GitHub Copilot, and Gemini aligned.
 -->
 
@@ -15,19 +15,12 @@ Why: Help contributors keep Codex, Cursor, Claude Code, GitHub Copilot, and Gemi
 - `.agents/skills/*/SKILL.md`: 共通 Agent Skills。
 - `.agents/commands/*.md`: 共通 command prompt。
 
-## MCP設定
+## Kaggle接続
 
 `KAGGLE_API_TOKEN` を環境変数として設定してください。トークン値は設定ファイルに直接書かないでください。
 
-| Tool | File | Notes |
-| --- | --- | --- |
-| Claude Code | `.mcp.json` | Project-scoped MCP設定。 |
-| Codex | `.codex/config.toml` | Kaggle MCPを `bearer_token_env_var` で参照。 |
-| Cursor | `.cursor/mcp.json` | `${env:KAGGLE_API_TOKEN}` を参照。 |
-| GitHub Copilot in VS Code | `.vscode/mcp.json` | VS Code input promptでトークンを受け取る。 |
-| Gemini CLI | `.gemini/settings.json` | `httpUrl` と `headers` でKaggle MCPを参照。 |
-
-GitHub Copilot CLIのユーザー単位MCPは `~/.copilot/mcp-config.json` です。これは個人環境の設定なので、このリポジトリにはコミットしません。
+Kaggle操作はCLIを使い、このリポジトリにはKaggle MCPの接続設定を配置しません。
+一部の既存skillにはMCPを前提とした手順が残っているため、CLIへの手順移行が必要です。
 
 ## Commands
 
