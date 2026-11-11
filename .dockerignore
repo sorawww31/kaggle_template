@@ -1,0 +1,7 @@
+# 場所: ビルドコンテキストのルート。
+# 目的: 現在のビルドに不要なデータ・コード・認証情報の転送を防ぐ。
+# ソースは Compose のボリュームで共有するため、Dockerfile だけ許可する。
+**
+!Dockerfile
+!Dockerfile.cpu
+!.dockerignore

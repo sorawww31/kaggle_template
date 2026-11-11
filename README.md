@@ -165,6 +165,38 @@ make jupyter
 
 # CPUで起動する場合はCPU=1やCPU=True などをつける
 ```
+### ビルドキャッシュの利用
+
+ビルドには BuildKit が必要です（現在の Docker Desktop / Docker Engine では標準）。
+通常は `make build` を使うと、変更のないインストール層が再利用されます。
+追加パッケージを変更して層を再実行するときも、BuildKit の pip キャッシュから
+ダウンロード済みファイルやビルド済み wheel を再利用できます。
+キャッシュはイメージには含まれず、同じ builder 内に保持されます。
+Compose の実行時ボリューム `./.cache` とは別のキャッシュです。
+
+`.dockerignore` は Dockerfile と自身だけをビルド対象にします。
+データ・出力・仮想環境・認証情報は転送しません。
+ソースは実行時のボリュームで共有します。将来 `COPY` / `ADD` を追加する場合は、
+必要なファイルを `.dockerignore` の許可リストにも追加してください。
+現在は `COPY` がなく、依存インストールの層が独立しているため、層の分割は不要です。
+
+時間とキャッシュの利用状況は、同じコマンドを2回実行して確認できます。
+2回目の pip インストール工程が `CACHED` になれば層が再利用されています。
+
+```sh
+time docker compose --progress=plain build
+time docker compose --progress=plain build
+
+# CPU 用 Dockerfile を直接ビルドする場合
+time docker build --progress=plain -f Dockerfile.cpu -t kaggle-env:cpu .
+```
+
+初回の Kaggle ベースイメージの取得時間は、このキャッシュでは短縮できません。
+通常の再ビルドでは `--no-cache` を付けず、ビルドキャッシュを削除しないでください。
+調査元: [Docker のキャッシュ最適化](https://docs.docker.com/build/cache/optimize/)、
+[pip のキャッシュ](https://pip.pypa.io/en/stable/topics/caching/)、
+[参考記事](https://zenn.dev/engharu/articles/b3aa073c3694de)。
+
 ### スクリプトの実行方法
 ```sh
 make bash
